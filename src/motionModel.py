@@ -1,3 +1,4 @@
+import numpy
 def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 #MOTIONMODEL - Transitions the robot from one state to the next using a
 #   differential drive motion model.
@@ -48,6 +49,7 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 # Determine New State
 #*****************************
     
+    state_out = {}
     if (action == -2):    # handle reverse motion
         
         r_dTheta = -params['d_theta_reverse']

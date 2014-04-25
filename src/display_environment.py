@@ -1,11 +1,12 @@
-def display_environment(x, y, state, observed_map, scale, DISPLAY_TYPE):
+def display_environment(x, y, state, observed_map, scale, DISPLAY_TYPE = 'blocks'):
     plt.ion()
     fig = plt.figure(1)
     fig.clear()
     ax = fig.add_subplot(111, aspect = 'equal')
-    if (DISPLAY_TYPE):
+
+    if DISPLAY_TYPE == 'blocks':
         plt.imshow(scipy.misc.imresize(observed_map, scale, interp='nearest'))
-    else:
+    elif DISPLAY_TYPE == 'dots':
         ind = numpy.where(observed_map == 0)
         plt.plot(x[ind]*scale,y[ind]*scale,'k.',markersize=0.5*scale)
 
