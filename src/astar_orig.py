@@ -6,6 +6,7 @@ import math
 import time
 import random
 
+import numpy
 import pdb
 import scipy.io as sio
 from shapely.geometry import Point
@@ -16,6 +17,7 @@ from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 from shapely.ops import unary_union
 from shapely.geometry import LineString
+
 
 class node:
     def __init__(self, xPos, yPos, theta, parent):
@@ -30,15 +32,17 @@ class node:
         return cmp(self.f, other.f)
 
 class AStar:
-    def __init__:
-        PQ = []
-        PQ_hash = {}
-        V = {}
+    def __init__(self):
+        self.PQ = []
+        self.PQ_hash = {}
+        self.V = {}
 
     def heuristic(self, cur_node, goal):
-       n_point = (cur_node.xPos, cur_node.yPos)
-       goal_point = (goal.xPos, goal.yPos)
-       return numpy.linalg.norm(goal_point-n_point)
+       #n_point = (cur_node.xPos, cur_node.yPos)
+       #goal_point = goal #(goal.xPos, goal.yPos)
+       xd = cur_node.xPos - goal[0]
+       yd = cur_node.yPos - goal[1]
+       return math.sqrt(xd * xd + yd * yd) #numpy.linalg.norm(goal_point-n_point)
 
     def getChildren(self, cur_node):
         child1 = node(cur_node.xPos, cur_node.yPos+1.0, 0.0, cur_node)
@@ -51,46 +55,64 @@ class AStar:
     def cost(self, parent, child):
         return 1.0
 
+    def atGoal(self, cur_node, goal):
+        xd = cur_node.xPos - goal[0]
+        yd = cur_node.yPos - goal[1]
+        return math.sqrt(xd * xd + yd * yd) < 0.1 #numpy.linalg.norm(goal_point-n_point)
+    
+    def reconstruct_path(self,curr_node):
+        path = [curr_node]
+        while (curr_node.parent):
+            path.append(curr_node.parent)
+            curr_node = curr_node.parent
+        return path
 
     def plan(self, start, goal):
-        n0 = node(start[0],start[1], 0.0, 0.0, h0, None)
-        h0 = heuristic(n0, goal)
-        PQ.heappush(n0)
-        PQ_hash.update((n0.xPos, n0.yPos, n.theta),n0)
+        n0 = node(start[0],start[1], 0.0, None)
+        n0.g = 0.0
+        h0 = self.heuristic(n0, goal)
+        heappush(self.PQ,n0)
+        self.PQ_hash[(n0.xPos, n0.yPos, n0.theta)] = n0
 
-        while(PQ.shape[0] > 0):
-            current = PQ.heappop()
-            del PQ_hash((current.xPos, current.yPos, current.theta))
-            if(atGoal(current)):
-                return reconstruct_path(V, goal)
+        while(len(self.PQ) > 0):
+            current = heappop(self.PQ)
+            
+            del self.PQ_hash[(current.xPos, current.yPos, current.theta)]
+            if(self.atGoal(current, goal)):
+                return self.reconstruct_path(current)
 
-            V.update{(current.xPos,current.yPos,current.theta), current}
+            self.V[(current.xPos,current.yPos,current.theta)] = current
 
             #get children
 
-            children = getChildren(current)#do set parent, should return an array of nodes
+            children = self.getChildren(current)#do set parent, should return an array of nodes
             
             for child in children:
                 child_key = (child.xPos, child.yPos, child.theta)
-                if child_key in V:
+                if child_key in self.V:
+                    continue
+                if child.xPos > 3 and child.xPos < 7 and child.yPos > 3 and child.yPos < 7:
                     continue
                 
-                tentative_g = current.g + path(current,child)#add belief later
+                tentative_g = current.g + self.cost(current,child)#add belief later
 
-                if (child_key in PQ_hash):
-                    existing_child = (PQ_hash.get(child_key))
+                if (child_key in self.PQ_hash):
+                    existing_child = (self.PQ_hash.get(child_key))
                     g_val = existing_child.g
                     if(tentative_g >= g_val):
                         continue
                     else:
                         existing_child.g = tentative_g
-                        existing_child.f = existing_child.g + heuristic(existing_child, goal)
+                        existing_child.f = existing_child.g + self.heuristic(existing_child, goal)
                         existing_child.parent = current
                 else:
                     child.g = tentative_g
-                    child.f = child.g + heuristic(child, goal)
+                    child.f = child.g + self.heuristic(child, goal)
                     child.parent = current
+                    heappush(self.PQ,child)
+                    self.PQ_hash[(child.xPos, child.yPos, child.theta)] = child
         
+        print 'A* Failed'
         return None   
 
                         
