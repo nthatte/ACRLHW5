@@ -6,18 +6,149 @@ import math
 import time
 import random
 
+import pdb
+import scipy.io as sio
+from shapely.geometry import Point
+from shapely.geometry import box
+from shapely.ops import cascaded_union
+from matplotlib import pyplot
+from descartes import PolygonPatch
+from shapely.geometry import CAP_STYLE, JOIN_STYLE
+from shapely.ops import unary_union
+from shapely.geometry import LineString
+
 class node:
-    xPos = 0 # x position
-    yPos = 0 # y position
-    distance = 0 # total distance already travelled to reach the node
-    priority = 0 # priority = distance + remaining distance estimate
+    def __init__(self, xPos, yPos, theta, g, h, parent):
+        self.xPos = xPos
+        self.yPos = yPos
+        self.theta = theta
+        self.g = g
+        self.h = h
+        self.f = self.g + self.h
+        self.parent = parent
+    def __cmp__(self, other):
+        return cmp(self.f, other.f)
+
+class AStar:
+    def __init__:
+        PQ = []
+        PQ_hash = {}
+        V = {}
+
+
+    def plan(start, goal):
+        h0 = heuristic()
+        n0 = node(start[0],start[1], 0.0, 0.0, h0, None)
+        PQ.heappush(n0)
+        PQ_hash.update((n0.xPos, n0.yPos, n.theta),n0)
+
+        while(PQ.shape[0] > 0):
+            current = PQ.heappop()
+            if(atGoal(current)):
+                return reconstruct_path(V, goal)
+
+            V.update{(current.xPos,current.yPos,current.theta), current}
+
+            #get children
+
+            children = getChildren(current)
+            
+            for child in children:
+                if (child.xPos, child.yPos, child.theta) in V:
+                    continue
+                
+                tentative_g = current.g + path(current,child)#add belief later
+
+                if ((child.xPos, child.yPos, child.theta) in PQ_hash) or tentative
+
+
+'''
+class WorldMap:
+    def __init__(self, map_name):
+        map_name_full = '../matlab_files/'+map_name+'.mat'
+        world_map = sio.loadmat(map_name_full, squeeze_me = True)['map_struct'].item()
+        world_map_1 = world_map[3]
+        self.start = world_map[5].item()
+        self.goal = world_map[6].item()
+        print self.start
+        print self.goal
+        walls_list = []
+        obstacles_list = []
+        for x in range(0, world_map_1.shape[0]):
+            for y in range(0, world_map_1.shape[1]):
+                if world_map_1[y,x] == 0.0:
+                    walls_list.append((y,x))
+                if (world_map_1[y,x] > 0.0) and (world_map_1[y,x] < 1.0):
+                    obstacles_list.append([y,x,world_map_1[y,x]])
+
+        walls_polygons = [Point(x,y).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (y,x) in walls_list]
+        self.walls_map = cascaded_union(walls_polygons)#list of polygons
+
+        obstacles_polygons = [Point(x,y).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (y,x,z) in obstacles_list]
+        self.obstacles_map = obstacles_polygons
+        
+        self.fig = pyplot.figure(1,figsize=[14,7],dpi = 90)
+        self.ax = self.fig.add_subplot(111)
+        xrange = [-0.5,49.5]
+        yrange = [-0.5,49.5]
+        self.ax.set_xlim(*xrange)
+        self.ax.set_ylim(*yrange)
+        self.ax.set_aspect(1)
+        for walls in self.walls_map:
+            p = PolygonPatch(walls, fc='#000000', ec='#000000', alpha=1.0, zorder=1)
+            self.ax.add_patch(p)
+        counter = 0
+        for ob in self.obstacles_map:
+            gamma = obstacles_list[counter][2]
+            p = PolygonPatch(ob, fc='#000000', ec='#000000', alpha=1-gamma, zorder=1)
+            self.ax.add_patch(p)
+            counter = counter + 1
+        start_polygons = Point(self.start[0],self.start[1]).buffer(0.25)
+        goal_polygons = Point(self.goal[0],self.goal[1]).buffer(0.25)
+        p = PolygonPatch(start_polygons, fc='#ff0000', ec='#ff0000', alpha=1, zorder=1)
+        self.ax.add_patch(p)
+        p = PolygonPatch(goal_polygons, fc='#00ff00', ec='#00ff00', alpha=1, zorder=1)
+        self.ax.add_patch(p)
+        
+        carWidth = 2.0
+        carHeight = 3.0
+        self.car_poly = box(-carHeight/2.0,-carWidth/2.0,carHeight/2.0,carWidth/2.0)
+        
+
+    def visualize(self, carX, carY, carTheta):
+        p = PolygonPatch(self.car_poly, fc='#0000ff', ec='#0000ff', alpha = 1.0, zorder = 2)
+        self.ax.add_patch(p)
+        pyplot.show() 
+
+
+if __name__ == "__main__":
+    a = WorldMap('map_1')
+    a.visualize(2.0, 2.0, 0.0)
+'''
+'''
+class AStar:
+    #world_map is a cascaded union of
+    def __init__(world_map, node0):
+        PQ = []#MAY BE COMPLETE BS
+        V = []
+
+
+    def heuristic(state, goal):
+'''
+'''
+class node:
+    xPos = 0.0 # x position
+    yPos = 0.0 # y position
+    theta = 0.0
+    #distance = 0 # total distance already travelled to reach the node
+    #priority = 0 # priority = distance + remaining distance estimate
     def __init__(self, xPos, yPos, distance, priority):
         self.xPos = xPos
         self.yPos = yPos
-        self.distance = distance
-        self.priority = priority
-    def __lt__(self, other): # comparison method for priority queue
-        return self.priority < other.priority
+        #self.distance = distance
+        #self.priority = priority
+    #def __lt__(self, other): # comparison method for priority queue
+        #return self.priority < other.priority
     def updatePriority(self, xDest, yDest):
         self.priority = self.distance + self.estimate(xDest, yDest) * 10 # A*
     # give higher priority to going straight instead of diagonally
@@ -196,3 +327,4 @@ for y in range(m):
     print
 
 raw_input('Press Enter...')
+'''
