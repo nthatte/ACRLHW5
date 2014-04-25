@@ -18,13 +18,13 @@ from shapely.ops import unary_union
 from shapely.geometry import LineString
 
 class node:
-    def __init__(self, xPos, yPos, theta, g, h, parent):
+    def __init__(self, xPos, yPos, theta, parent):
         self.xPos = xPos
         self.yPos = yPos
         self.theta = theta
-        self.g = g
-        self.h = h
-        self.f = self.g + self.h
+        self.g = None
+        self.h = None
+        self.f = None
         self.parent = parent
     def __cmp__(self, other):
         return cmp(self.f, other.f)
@@ -35,15 +35,32 @@ class AStar:
         PQ_hash = {}
         V = {}
 
+    def heuristic(self, cur_node, goal):
+       n_point = (cur_node.xPos, cur_node.yPos)
+       goal_point = (goal.xPos, goal.yPos)
+       return numpy.linalg.norm(goal_point-n_point)
 
-    def plan(start, goal):
-        h0 = heuristic()
+    def getChildren(self, cur_node):
+        child1 = node(cur_node.xPos, cur_node.yPos+1.0, 0.0, cur_node)
+        child2 = node(cur_node.xPos+1.0, cur_node.yPos, 0.0, cur_node)
+        child3 = node(cur_node.xPos, cur_node.yPos-1.0, 0.0, cur_node)
+        child4 = node(cur_node.xPos-1.0, cur_node.yPos, 0.0, cur_node)
+        children = [child1, child2, child3, child4]
+        return children
+
+    def cost(self, parent, child):
+        return 1.0
+
+
+    def plan(self, start, goal):
         n0 = node(start[0],start[1], 0.0, 0.0, h0, None)
+        h0 = heuristic(n0, goal)
         PQ.heappush(n0)
         PQ_hash.update((n0.xPos, n0.yPos, n.theta),n0)
 
         while(PQ.shape[0] > 0):
             current = PQ.heappop()
+            del PQ_hash((current.xPos, current.yPos, current.theta))
             if(atGoal(current)):
                 return reconstruct_path(V, goal)
 
@@ -51,15 +68,32 @@ class AStar:
 
             #get children
 
-            children = getChildren(current)
+            children = getChildren(current)#do set parent, should return an array of nodes
             
             for child in children:
-                if (child.xPos, child.yPos, child.theta) in V:
+                child_key = (child.xPos, child.yPos, child.theta)
+                if child_key in V:
                     continue
                 
                 tentative_g = current.g + path(current,child)#add belief later
 
-                if ((child.xPos, child.yPos, child.theta) in PQ_hash) or tentative
+                if (child_key in PQ_hash):
+                    existing_child = (PQ_hash.get(child_key))
+                    g_val = existing_child.g
+                    if(tentative_g >= g_val):
+                        continue
+                    else:
+                        existing_child.g = tentative_g
+                        existing_child.f = existing_child.g + heuristic(existing_child, goal)
+                        existing_child.parent = current
+                else:
+                    child.g = tentative_g
+                    child.f = child.g + heuristic(child, goal)
+                    child.parent = current
+        
+        return None   
+
+                        
 
 
 '''
@@ -124,8 +158,6 @@ class WorldMap:
 if __name__ == "__main__":
     a = WorldMap('map_1')
     a.visualize(2.0, 2.0, 0.0)
-'''
-'''
 class AStar:
     #world_map is a cascaded union of
     def __init__(world_map, node0):
@@ -134,8 +166,6 @@ class AStar:
 
 
     def heuristic(state, goal):
-'''
-'''
 class node:
     xPos = 0.0 # x position
     yPos = 0.0 # y position
