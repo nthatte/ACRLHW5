@@ -92,7 +92,7 @@ for i in range(0,len(map_struct['map_samples'])):
 
     # display the initial state
     if DISPLAY_ON:
-        display_environment
+        display_environment(x, y, state, map_struct, params, observed_map, scale)
 
     # loop until maxCount has been reached or goal is found
     while (state['moveCount'] < params['max_moveCount']) and flags != 2:
@@ -130,7 +130,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            display_environment
+            display_environment(x, y, state, map_struct, params, observed_map, scale)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']

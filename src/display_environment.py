@@ -1,20 +1,29 @@
-def display_environment(x, y, state, observed_map, scale, DISPLAY_TYPE = 'blocks'):
+import matplotlib.pyplot as plt
+import numpy
+from scipy.misc import imresize
+import time
+import pdb
+
+def display_environment(x, y, state, map_struct, params, observed_map, scale, DISPLAY_TYPE = 'blocks'):
     plt.ion()
-    fig = plt.figure(1)
-    fig.clear()
-    ax = fig.add_subplot(111, aspect = 'equal')
+    if plt.fignum_exists(1):
+        display_environment.fig.clear()
+    else:
+        display_environment.fig = plt.figure(1)
+        plt.show()
+        ax = display_environment.fig.add_subplot(111, aspect = 'equal')
 
     if DISPLAY_TYPE == 'blocks':
-        plt.imshow(scipy.misc.imresize(observed_map, scale, interp='nearest'))
+        plt.imshow(imresize(observed_map, scale, interp='nearest'))
     elif DISPLAY_TYPE == 'dots':
         ind = numpy.where(observed_map == 0)
         plt.plot(x[ind]*scale,y[ind]*scale,'k.',markersize=0.5*scale)
 
-    plt.plot(scale*map_struct['start']['x'],scale*map_struct['start']['y'],'g.', markersize = 2*scale)
-    plt.plot(scale*map_struct['goal']['x'] ,scale*map_struct['goal']['y'] ,'r.', markersize = 2*scale)
+    plt.plot(scale*map_struct['start'][0],scale*map_struct['start'][1],'g.', markersize = 2*scale)
+    plt.plot(scale*map_struct['goal'][0] ,scale*map_struct['goal'][1] ,'r.', markersize = 2*scale)
 
-    plt.plot(scale*numpy.array([state['border'][0,:], state['border'][0,1:-1]]), 
-        scale*numpy.array([state['border'][1,:], state['border'][1,1:-1]]), color='r')
+    plt.plot(scale*numpy.append(state['border'][0,:], state['border'][0,0]),
+        scale*numpy.append(state['border'][1,:], state['border'][1,0]), color='r')
 
     plt.plot(scale*state['x'],scale*state['y'],'b.', markersize = 2*scale)
 
@@ -25,4 +34,5 @@ def display_environment(x, y, state, observed_map, scale, DISPLAY_TYPE = 'blocks
 
     plt.axis((0, 500, 0, 500))
     plt.axis('off')
-    plt.show()
+    plt.draw()
+    time.sleep(0.05)

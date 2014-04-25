@@ -126,9 +126,10 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 
     # check to see whether any of these locations falls inside our car
     # polygon
-    inpoly = inpolygon(x[ink], y[ind], state_out['border'][1,:], state_out['border'][2,:])
+    inpoly = []
+    #inpoly = inpolygon(x[ink], y[ind], state_out['border'][1,:], state_out['border'][2,:])
 
-    if (inpoly.sum()>0):
+    if (sum(inpoly)>0):
         #we have a collision
         print 'Car Has Collided'
         state_out = state_in
@@ -141,8 +142,7 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
     #*****************************
 
     # get distances from each location to the car's location
-    dists = numpy.sqrt((x - state_out['x']*numpy.ones(N,M))**2 + 
-        (y-state_out['y']*numpy.ones(N,M))**2)
+    dists = numpy.sqrt((x - state_out['x'])**2 + (y-state_out['y'])**2)
 
     # find indices which are closer than observation radius
     obs_ind = numpy.where(dists <= params['observation_radius'])
@@ -157,10 +157,14 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
     #*****************************
 
     # check to see whether goal falls inside our car polygon
-    inpoly = inpolygon(goal_state['x'], goal_state['y'], state_out['border'][0,:], state_out['border'][1,:])
+    inpoly = []
+    #inpoly = inpolygon(goal_state['x'], goal_state['y'], state_out['border'][0,:], state_out['border'][1,:])
 
     if (sum(inpoly)>0):
         # we have reached the goal, time to bust out the beer!
         print 'Reached the Goal!'
         flags = 1 # goal flag
         return state_out, observed_map, flags
+
+
+    return state_out, observed_map, flags
