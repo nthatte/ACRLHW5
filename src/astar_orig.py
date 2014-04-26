@@ -91,8 +91,6 @@ class AStar:
                 child_key = (child.xPos, child.yPos, child.theta)
                 if child_key in self.V:
                     continue
-                if child.xPos > 3 and child.xPos < 7 and child.yPos > 3 and child.yPos < 7:
-                    continue
                 
                 tentative_g = current.g + self.cost(current,child)#add belief later
 

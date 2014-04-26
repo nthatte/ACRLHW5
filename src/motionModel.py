@@ -128,7 +128,7 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
     # check to see whether any of these locations falls inside our car
     # polygon
     inpoly = in_polygon(zip(x[ind],y[ind]), zip(state_out['border'][0,:], state_out['border'][1,:]))
-
+    
     if (inpoly):
         #we have a collision
         print 'Car Has Collided'

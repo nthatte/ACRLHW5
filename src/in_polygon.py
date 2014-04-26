@@ -1,9 +1,8 @@
-from shapely.geometry import Point, Polygon
+from shapely.geometry import MultiPoint, Polygon
 
 def in_polygon(points, polygon_corners):
     polygon = Polygon(polygon_corners)
-    for point in points:
-        shapely_point = Point(point)
-        if polygon.intersects(shapely_point):
-            return True 
+    shapely_multipoint = MultiPoint(points)
+    if polygon.contains(shapely_multipoint):
+        return True 
     return False
