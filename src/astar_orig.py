@@ -6,18 +6,201 @@ import math
 import time
 import random
 
+import numpy
+import pdb
+import scipy.io as sio
+from shapely.geometry import Point
+from shapely.geometry import box
+from shapely.ops import cascaded_union
+from matplotlib import pyplot
+from descartes import PolygonPatch
+from shapely.geometry import CAP_STYLE, JOIN_STYLE
+from shapely.ops import unary_union
+from shapely.geometry import LineString
+
+
 class node:
-    xPos = 0 # x position
-    yPos = 0 # y position
-    distance = 0 # total distance already travelled to reach the node
-    priority = 0 # priority = distance + remaining distance estimate
+    def __init__(self, xPos, yPos, theta, parent):
+        self.xPos = xPos
+        self.yPos = yPos
+        self.theta = theta
+        self.g = None
+        self.h = None
+        self.f = None
+        self.parent = parent
+    def __cmp__(self, other):
+        return cmp(self.f, other.f)
+
+class AStar:
+    def __init__(self):
+        self.PQ = []
+        self.PQ_hash = {}
+        self.V = {}
+
+    def heuristic(self, cur_node, goal):
+       #n_point = (cur_node.xPos, cur_node.yPos)
+       #goal_point = goal #(goal.xPos, goal.yPos)
+       xd = cur_node.xPos - goal[0]
+       yd = cur_node.yPos - goal[1]
+       return math.sqrt(xd * xd + yd * yd) #numpy.linalg.norm(goal_point-n_point)
+
+    def getChildren(self, cur_node):
+        child1 = node(cur_node.xPos, cur_node.yPos+1.0, 0.0, cur_node)
+        child2 = node(cur_node.xPos+1.0, cur_node.yPos, 0.0, cur_node)
+        child3 = node(cur_node.xPos, cur_node.yPos-1.0, 0.0, cur_node)
+        child4 = node(cur_node.xPos-1.0, cur_node.yPos, 0.0, cur_node)
+        children = [child1, child2, child3, child4]
+        return children
+
+    def cost(self, parent, child):
+        return 1.0
+
+    def atGoal(self, cur_node, goal):
+        xd = cur_node.xPos - goal[0]
+        yd = cur_node.yPos - goal[1]
+        return math.sqrt(xd * xd + yd * yd) < 0.1 #numpy.linalg.norm(goal_point-n_point)
+    
+    def reconstruct_path(self,curr_node):
+        path = [curr_node]
+        while (curr_node.parent):
+            path.append(curr_node.parent)
+            curr_node = curr_node.parent
+        return path
+
+    def plan(self, start, goal):
+        n0 = node(start[0],start[1], 0.0, None)
+        n0.g = 0.0
+        h0 = self.heuristic(n0, goal)
+        heappush(self.PQ,n0)
+        self.PQ_hash[(n0.xPos, n0.yPos, n0.theta)] = n0
+
+        while(len(self.PQ) > 0):
+            current = heappop(self.PQ)
+            
+            del self.PQ_hash[(current.xPos, current.yPos, current.theta)]
+            if(self.atGoal(current, goal)):
+                return self.reconstruct_path(current)
+
+            self.V[(current.xPos,current.yPos,current.theta)] = current
+
+            #get children
+
+            children = self.getChildren(current)#do set parent, should return an array of nodes
+            
+            for child in children:
+                child_key = (child.xPos, child.yPos, child.theta)
+                if child_key in self.V:
+                    continue
+                if child.xPos > 3 and child.xPos < 7 and child.yPos > 3 and child.yPos < 7:
+                    continue
+                
+                tentative_g = current.g + self.cost(current,child)#add belief later
+
+                if (child_key in self.PQ_hash):
+                    existing_child = (self.PQ_hash.get(child_key))
+                    g_val = existing_child.g
+                    if(tentative_g >= g_val):
+                        continue
+                    else:
+                        existing_child.g = tentative_g
+                        existing_child.f = existing_child.g + self.heuristic(existing_child, goal)
+                        existing_child.parent = current
+                else:
+                    child.g = tentative_g
+                    child.f = child.g + self.heuristic(child, goal)
+                    child.parent = current
+                    heappush(self.PQ,child)
+                    self.PQ_hash[(child.xPos, child.yPos, child.theta)] = child
+        
+        print 'A* Failed'
+        return None   
+
+                        
+
+
+'''
+class WorldMap:
+    def __init__(self, map_name):
+        map_name_full = '../matlab_files/'+map_name+'.mat'
+        world_map = sio.loadmat(map_name_full, squeeze_me = True)['map_struct'].item()
+        world_map_1 = world_map[3]
+        self.start = world_map[5].item()
+        self.goal = world_map[6].item()
+        print self.start
+        print self.goal
+        walls_list = []
+        obstacles_list = []
+        for x in range(0, world_map_1.shape[0]):
+            for y in range(0, world_map_1.shape[1]):
+                if world_map_1[y,x] == 0.0:
+                    walls_list.append((y,x))
+                if (world_map_1[y,x] > 0.0) and (world_map_1[y,x] < 1.0):
+                    obstacles_list.append([y,x,world_map_1[y,x]])
+
+        walls_polygons = [Point(x,y).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (y,x) in walls_list]
+        self.walls_map = cascaded_union(walls_polygons)#list of polygons
+
+        obstacles_polygons = [Point(x,y).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (y,x,z) in obstacles_list]
+        self.obstacles_map = obstacles_polygons
+        
+        self.fig = pyplot.figure(1,figsize=[14,7],dpi = 90)
+        self.ax = self.fig.add_subplot(111)
+        xrange = [-0.5,49.5]
+        yrange = [-0.5,49.5]
+        self.ax.set_xlim(*xrange)
+        self.ax.set_ylim(*yrange)
+        self.ax.set_aspect(1)
+        for walls in self.walls_map:
+            p = PolygonPatch(walls, fc='#000000', ec='#000000', alpha=1.0, zorder=1)
+            self.ax.add_patch(p)
+        counter = 0
+        for ob in self.obstacles_map:
+            gamma = obstacles_list[counter][2]
+            p = PolygonPatch(ob, fc='#000000', ec='#000000', alpha=1-gamma, zorder=1)
+            self.ax.add_patch(p)
+            counter = counter + 1
+        start_polygons = Point(self.start[0],self.start[1]).buffer(0.25)
+        goal_polygons = Point(self.goal[0],self.goal[1]).buffer(0.25)
+        p = PolygonPatch(start_polygons, fc='#ff0000', ec='#ff0000', alpha=1, zorder=1)
+        self.ax.add_patch(p)
+        p = PolygonPatch(goal_polygons, fc='#00ff00', ec='#00ff00', alpha=1, zorder=1)
+        self.ax.add_patch(p)
+        
+        carWidth = 2.0
+        carHeight = 3.0
+        self.car_poly = box(-carHeight/2.0,-carWidth/2.0,carHeight/2.0,carWidth/2.0)
+        
+
+    def visualize(self, carX, carY, carTheta):
+        p = PolygonPatch(self.car_poly, fc='#0000ff', ec='#0000ff', alpha = 1.0, zorder = 2)
+        self.ax.add_patch(p)
+        pyplot.show() 
+
+
+if __name__ == "__main__":
+    a = WorldMap('map_1')
+    a.visualize(2.0, 2.0, 0.0)
+class AStar:
+    #world_map is a cascaded union of
+    def __init__(world_map, node0):
+        PQ = []#MAY BE COMPLETE BS
+        V = []
+
+
+    def heuristic(state, goal):
+class node:
+    xPos = 0.0 # x position
+    yPos = 0.0 # y position
+    theta = 0.0
+    #distance = 0 # total distance already travelled to reach the node
+    #priority = 0 # priority = distance + remaining distance estimate
     def __init__(self, xPos, yPos, distance, priority):
         self.xPos = xPos
         self.yPos = yPos
-        self.distance = distance
-        self.priority = priority
-    def __lt__(self, other): # comparison method for priority queue
-        return self.priority < other.priority
+        #self.distance = distance
+        #self.priority = priority
+    #def __lt__(self, other): # comparison method for priority queue
+        #return self.priority < other.priority
     def updatePriority(self, xDest, yDest):
         self.priority = self.distance + self.estimate(xDest, yDest) * 10 # A*
     # give higher priority to going straight instead of diagonally
@@ -196,3 +379,4 @@ for y in range(m):
     print
 
 raw_input('Press Enter...')
+'''
