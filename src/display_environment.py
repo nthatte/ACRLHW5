@@ -6,17 +6,13 @@ import pdb
 
 def display_environment(x, y, state, map_struct, params, observed_map, scale, DISPLAY_TYPE = 'blocks'):
     if plt.fignum_exists(1):
-        if not numpy.array_equal(display_environment.observed_map,observed_map):
-            print 'here'
-            display_environment.observed_map = observed_map
-            if DISPLAY_TYPE == 'blocks':
-                display_environment.environ.set_data(imresize(observed_map, scale, interp='nearest'))
-                plt.show()
-
-            elif DISPLAY_TYPE == 'dots':
-                ind = numpy.where(observed_map == 0)
-                display_environment.environ.set_xdata(x[ind]*scale)
-                display_environment.environ.set_ydata(y[ind]*scale)
+        if DISPLAY_TYPE == 'blocks':
+            display_environment.environ.set_data(imresize(observed_map, scale, interp='nearest'))
+    
+        elif DISPLAY_TYPE == 'dots':
+            ind = numpy.where(observed_map == 0)
+            display_environment.environ.set_xdata(x[ind]*scale)
+            display_environment.environ.set_ydata(y[ind]*scale)
            
         display_environment.l3.set_xdata(scale*numpy.append(state['border'][0,:], state['border'][0,0]))
         display_environment.l3.set_ydata(scale*numpy.append(state['border'][1,:], state['border'][1,0]))
@@ -35,7 +31,6 @@ def display_environment(x, y, state, map_struct, params, observed_map, scale, DI
         display_environment.fig.show()
         ax = display_environment.fig.add_subplot(111, aspect = 'equal')
 
-        display_environment.observed_map = observed_map
         if DISPLAY_TYPE == 'blocks':
             display_environment.environ = plt.imshow(imresize(observed_map, scale, interp='nearest'))
 

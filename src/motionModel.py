@@ -1,4 +1,5 @@
 import numpy
+from in_polygon import in_polygon
 def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 #MOTIONMODEL - Transitions the robot from one state to the next using a
 #   differential drive motion model.
@@ -126,10 +127,9 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 
     # check to see whether any of these locations falls inside our car
     # polygon
-    inpoly = []
-    #inpoly = inpolygon(x[ink], y[ind], state_out['border'][1,:], state_out['border'][2,:])
+    inpoly = in_polygon(zip(x[ind],y[ind]), zip(state_out['border'][0,:], state_out['border'][1,:]))
 
-    if (sum(inpoly)>0):
+    if (inpoly):
         #we have a collision
         print 'Car Has Collided'
         state_out = state_in
@@ -157,10 +157,9 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
     #*****************************
 
     # check to see whether goal falls inside our car polygon
-    inpoly = []
-    #inpoly = inpolygon(goal_state['x'], goal_state['y'], state_out['border'][0,:], state_out['border'][1,:])
+    inpoly = in_polygon(zip(x[ind],y[ind]), zip(state_out['border'][0,:], state_out['border'][1,:]))
 
-    if (sum(inpoly)>0):
+    if (inpoly):
         # we have reached the goal, time to bust out the beer!
         print 'Reached the Goal!'
         flags = 1 # goal flag

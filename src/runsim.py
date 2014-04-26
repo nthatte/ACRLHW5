@@ -3,6 +3,7 @@ import pdb
 from display_environment import *
 from initialize_state import *
 from motionModel import *
+import matplotlib.pyplot as plt
 
 #*****************************
 # Load map files and parameters
