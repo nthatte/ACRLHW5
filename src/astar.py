@@ -13,12 +13,13 @@ class node:
         return cmp(self.f, other.f)
 
 class AStar:
-    def __init__(self, motion_primitives, heuristic_function, valid_edge_function, state_equality_function):
+    def __init__(self, motion_primitives, cost_function, heuristic_function, valid_edge_function, state_equality_function):
         self.PQ = []
         self.PQ_hash = {}
         self.V = {}
 
         self.motion_primitives = motion_primitives
+        self.cost = cost_function
         self.heuristic = heuristic_function
         self.valid_edge = valid_edge_function
         self.state_is_equal = state_equality_function
@@ -28,7 +29,7 @@ class AStar:
         for primitive in self.motion_primitives:
             if self.valid_edge(cur_node.state, primitive):
                 new_state = cur_node.state + primitive.delta_state
-                g = cur_node.g + primitive.cost
+                g = cur_node.g + self.cost(cur_node.state, primitive)
                 h = self.heuristic(new_state, self.goal_state) 
                 child = node(new_state, cur_node, g, h)
                 children.append(child)

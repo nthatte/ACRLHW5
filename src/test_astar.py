@@ -20,20 +20,24 @@ def state_equality(state1, state2):
     return np.array_equal(state1,state2)
 
 class motion_primitive:
-    def __init__(self, delta_state, cost):
+    def __init__(self, delta_state):
         self.delta_state = delta_state
-        self.cost = cost
 
 delta_states = [np.array([ 1,  0]),
+                np.array([ 1,  1]),
                 np.array([ 0,  1]),
-                np.array([ -1,  1]),
+                np.array([-1,  1]),
                 np.array([-1,  0]),
-                np.array([10,  10]),
-                np.array([ 0, -1])]
+                np.array([-1, -1]),
+                np.array([ 0, -1]),
+                np.array([ 1, -1])]
     
-motion_primitives = [motion_primitive(delta_state, 1) for delta_state in delta_states]
+motion_primitives = [motion_primitive(delta_state) for delta_state in delta_states]
 
-astar = AStar(motion_primitives, heuristic, valid_edge_function, state_equality)
+def cost_function(state, motion_primitive):
+    return np.linalg.norm(motion_primitive.delta_state)
+
+astar = AStar(motion_primitives, cost_function, heuristic, valid_edge_function, state_equality)
 plan = astar.plan(start_state, goal_state)
 
 pathx = [state[0] for state in plan]
