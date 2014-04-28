@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pdb
 
 #define states
-world_size = 10
+world_size = 30
 goal_state = np.array([world_size - 1, world_size - 1])
 (X,Y) = np.meshgrid(range(world_size), range(world_size))
 states = np.array(zip(X.flatten(), Y.flatten()))
@@ -18,6 +18,27 @@ actions = [np.array([ 1,  0]),
            np.array([ 0, -1]),
            np.array([ 1, -1])]
 
+init_policy = {}
+for s in states:
+    angle = np.degrees(np.arctan2(goal_state[1] - s[1], goal_state[0] - s[0]))
+    if angle > -22.5 and angle <= 22.5:
+        init_policy[str(s)] = actions[0]
+    elif angle > 22.5 and angle <= 67.5:
+        init_policy[str(s)] = actions[1]
+    elif angle > 67.5 and angle <= 112.5:
+        init_policy[str(s)] = actions[2]
+    elif angle > 112.5 and angle <= 157.5:
+        init_policy[str(s)] = actions[3]
+    elif (angle > 157.5 and angle <= 180) or (angle <= -157.5 and angle >= -180):
+        init_policy[str(s)] = actions[4]
+    elif angle > -157.5 and angle <= -112.5:
+        init_policy[str(s)] = actions[4]
+    elif angle > -112.5 and angle <= -67.5:
+        init_policy[str(s)] = actions[6]
+    elif angle > --67.5 and angle <= -22.5:
+        init_policy[str(s)] = actions[7]
+    
+        
 def valid_state(state):
     if state[0] >= 0 and state[0] <= goal_state[0]:
         if state[1] >=0 and state[1] <= goal_state[1]:
@@ -38,7 +59,8 @@ def cost_function(state, action):
     return np.linalg.norm(action)
 
 mdp = MDP(states, valid_actions_function, cost_function)
-V, pi = mdp.value_iteration()
+V, pi = mdp.value_iteration(policy = init_policy, plot = True, world_size = world_size)
+#V, pi = mdp.value_iteration()
 
 value_mat = np.zeros((world_size,world_size))
 Sx = []
