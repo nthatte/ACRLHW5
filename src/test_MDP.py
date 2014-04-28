@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pdb
 
 #define states
-world_size = 30
+world_size = 50
 goal_state = np.array([world_size - 1, world_size - 1])
 (X,Y) = np.meshgrid(range(world_size), range(world_size))
 states = np.array(zip(X.flatten(), Y.flatten()))
@@ -22,21 +22,21 @@ init_policy = {}
 for s in states:
     angle = np.degrees(np.arctan2(goal_state[1] - s[1], goal_state[0] - s[0]))
     if angle > -22.5 and angle <= 22.5:
-        init_policy[str(s)] = actions[0]
+        init_policy[s.tostring()] = actions[0]
     elif angle > 22.5 and angle <= 67.5:
-        init_policy[str(s)] = actions[1]
+        init_policy[s.tostring()] = actions[1]
     elif angle > 67.5 and angle <= 112.5:
-        init_policy[str(s)] = actions[2]
+        init_policy[s.tostring()] = actions[2]
     elif angle > 112.5 and angle <= 157.5:
-        init_policy[str(s)] = actions[3]
+        init_policy[s.tostring()] = actions[3]
     elif (angle > 157.5 and angle <= 180) or (angle <= -157.5 and angle >= -180):
-        init_policy[str(s)] = actions[4]
+        init_policy[s.tostring()] = actions[4]
     elif angle > -157.5 and angle <= -112.5:
-        init_policy[str(s)] = actions[4]
+        init_policy[s.tostring()] = actions[4]
     elif angle > -112.5 and angle <= -67.5:
-        init_policy[str(s)] = actions[6]
+        init_policy[s.tostring()] = actions[6]
     elif angle > --67.5 and angle <= -22.5:
-        init_policy[str(s)] = actions[7]
+        init_policy[s.tostring()] = actions[7]
     
         
 def valid_state(state):
@@ -59,7 +59,8 @@ def cost_function(state, action):
     return np.linalg.norm(action)
 
 mdp = MDP(states, valid_actions_function, cost_function)
-V, pi = mdp.value_iteration(policy = init_policy, plot = True, world_size = world_size)
+#V, pi = mdp.value_iteration(policy = init_policy, plot = True, world_size = world_size)
+V, pi = mdp.value_iteration(policy = init_policy)
 #V, pi = mdp.value_iteration()
 
 value_mat = np.zeros((world_size,world_size))
@@ -68,11 +69,11 @@ Sy = []
 Ax = []
 Ay = []
 for s in states:
-    value_mat[s[0], s[1]] = V[str(s)]
+    value_mat[s[0], s[1]] = V[s.tostring()]
     Sx.append(s[0])
     Sy.append(s[1])
-    Ax.append(pi[str(s)][0])
-    Ay.append(pi[str(s)][1])
+    Ax.append(pi[s.tostring()][0])
+    Ay.append(pi[s.tostring()][1])
 
 plt.pcolor(value_mat.T)
 plt.quiver(Sx, Sy, Ax, Ay)

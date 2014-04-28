@@ -16,15 +16,14 @@ class MDP:
             value = self.policy_evaluation(policy)
         else:
             if value == None:
-                value = dict([(str(s),0) for s in self.states])
+                value = dict([(s.tostring(),0) for s in self.states])
             policy = {} 
 
-        value_old = dict([(str(s),float('inf')) for s in self.states])
+        value_old = dict([(s.tostring(),float('inf')) for s in self.states])
         #run to convergence
         i = 0
 
         if plot:
-            world_size = 10
             plt.ion()
             fig = plt.figure(1)
 
@@ -41,20 +40,21 @@ class MDP:
 
             for s in self.states:
                 #argmax value to get best action
-                value_a_tuples = [(self.cost(s,a) + value[str(s + a)], a) for a in
+                value_a_tuples = [(self.cost(s,a) + value[(s + a).tostring()], a) for a in
                     self.actions(s)]
                 
                 value_a_min = min(value_a_tuples, key = lambda value_a: value_a[0])
 
                 #bellman update
-                value[str(s)] = value_a_min[0]
-                policy[str(s)] = value_a_min[1]
+                value[s.tostring()] = value_a_min[0]
+                policy[s.tostring()] = value_a_min[1]
 
-                value_mat[s[0], s[1]] = value[str(s)]
-                Sx.append(s[0])
-                Sy.append(s[1])
-                Ax.append(policy[str(s)][0])
-                Ay.append(policy[str(s)][1])
+                if plot:
+                    value_mat[s[0], s[1]] = value[s.tostring()]
+                    Sx.append(s[0])
+                    Sy.append(s[1])
+                    Ax.append(policy[s.tostring()][0])
+                    Ay.append(policy[s.tostring()][1])
 
             if plot:
                 fig.clear()
@@ -71,17 +71,17 @@ class MDP:
         if init_value:
             value = init_value
         else:
-            value = dict([(str(s),0) for s in self.states])
+            value = dict([(s.tostring(),0) for s in self.states])
 
-        value_old = dict([(str(s),float('inf')) for s in self.states])
+        value_old = dict([(s.tostring(),float('inf')) for s in self.states])
         while value != value_old:
             value_old = copy.deepcopy(value)
             for s in self.states:
-                a = policy[str(s)]
-                if str(s+a) in value:
-                    vp = value[str(s+a)]
+                a = policy[s.tostring()]
+                if (s+a).tostring() in value:
+                    vp = value[(s+a).tostring()]
                 else:
                     vp = 100000
-                value[str(s)] = self.cost(s,a) + self.gamma*vp
+                value[s.tostring()] = self.cost(s,a) + self.gamma*vp
 
         return value
