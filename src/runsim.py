@@ -4,6 +4,10 @@ from display_environment import *
 from initialize_state import *
 from motionModel import *
 import matplotlib.pyplot as plt
+from astar import AStar
+from astar_fcns import heuristic, valid_edge_function, state_equality, rotate_state, cost_function
+from motion_primitive import motion_primitive
+import math
 
 #*****************************
 # Load map files and parameters
@@ -63,6 +67,11 @@ DISPLAY_TYPE = 'blocks' # display as dots or blocks
 
 
 
+#Set up motion primitives-TODO
+#Set up A Star
+astar = AStar(motion_primitives, cost_function, heuristic, valid_edge_function, state_equality)
+
+
 
 # Example:
 #
@@ -89,13 +98,14 @@ for i in range(0,len(map_struct['map_samples'])):
     # Initialize the starting car state and observed map
     # observed_map is set to seed map, and the bridge information will be
     # updated once the car is within params.observation_radius
-    state, observed_map, flags, goal = init_state(map_struct, params)
+    state, observed_map, flags, goal = init_state(map_struct, params)    
 
     # display the initial state
     if DISPLAY_ON:
         display_environment(x, y, state, map_struct, params, observed_map, scale)
 
     # loop until maxCount has been reached or goal is found
+    loopCounter = 0;
     while (state['moveCount'] < params['max_moveCount']) and flags != 2:
 
         #---------------------------------------
@@ -107,6 +117,16 @@ for i in range(0,len(map_struct['map_samples'])):
         # Here you execute your policy (which may include re-planning or
         # any technique you consider necessary):
         
+        #If we have just started, or if the path has become invalid due to observations,
+        #we should run the AStar algorithm on the currently observed map using motion
+        #primitives generated offline. If the current path is valid, we should just
+        #execute the next step in it.
+        if(invalidPath(path, observed_map) or loopCounter == 0):
+            astar_state = 
+            astar_goal = 
+            plan = astar.plan(astar_state, astar_goal)
+        else:
+            #execute plan - TODO
         
         # My example policy: slight turn
         action = .1

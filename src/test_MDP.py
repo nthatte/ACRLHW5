@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import pdb
 
 #define states
-goal_state = np.array([49, 49])
-(X,Y) = np.meshgrid(range(50), range(50), indexing='xy')
+world_size = 10
+goal_state = np.array([world_size - 1, world_size - 1])
+(X,Y) = np.meshgrid(range(world_size), range(world_size))
 states = np.array(zip(X.flatten(), Y.flatten()))
 
 actions = [np.array([ 1,  0]),
@@ -39,7 +40,7 @@ def cost_function(state, action):
 mdp = MDP(states, valid_actions_function, cost_function)
 V, pi = mdp.value_iteration()
 
-value_mat = np.zeros((50,50))
+value_mat = np.zeros((world_size,world_size))
 Sx = []
 Sy = []
 Ax = []
@@ -53,6 +54,6 @@ for s in states:
 
 plt.pcolor(value_mat.T)
 plt.quiver(Sx, Sy, Ax, Ay)
-plt.plot([5, 49],[4, 4], linewidth = 4)
-plt.plot([4, 4],[5, 49], linewidth = 4)
+plt.plot([5, world_size - 1],[4, 4], linewidth = 4)
+plt.plot([4, 4],[5, world_size - 1], linewidth = 4)
 plt.show()
