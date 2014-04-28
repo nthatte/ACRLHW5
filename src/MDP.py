@@ -20,7 +20,7 @@ class MDP:
 
         #run to convergence
         i = 0
-        while i < 3:
+        while value != value_old:
             print i
             value_old = copy.deepcopy(value)
 
