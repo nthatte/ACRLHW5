@@ -42,9 +42,9 @@ for s in states:
 def valid_state(state):
     if state[0] >= 0 and state[0] <= goal_state[0]:
         if state[1] >=0 and state[1] <= goal_state[1]:
-            if state[1] == 4 and state[0] > 4:
+            if state[1] == world_size/2 and state[0] > world_size/2:
                 return False
-            if state[0] == 4 and state[1] > 4:
+            if state[0] == world_size/2 and state[1] > world_size/2:
                 return False
             return True
     return False
@@ -75,8 +75,9 @@ for s in states:
     Ax.append(pi[s.tostring()][0])
     Ay.append(pi[s.tostring()][1])
 
+fig = plt.figure(1)
 plt.pcolor(value_mat.T)
 plt.quiver(Sx, Sy, Ax, Ay)
-plt.plot([5, world_size - 1],[4, 4], linewidth = 4)
-plt.plot([4, 4],[5, world_size - 1], linewidth = 4)
+plt.plot([world_size/2+1, world_size - 1],[world_size/2, world_size/2], linewidth = 4)
+plt.plot([world_size/2, world_size/2],[world_size/2+1, world_size - 1], linewidth = 4)
 plt.show()

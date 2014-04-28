@@ -39,29 +39,31 @@ class MDP:
                 Ay = []
 
             for s in self.states:
+                string_s = s.tostring()
+
                 #argmax value to get best action
-                value_a_tuples = [(self.cost(s,a) + value[(s + a).tostring()], a) for a in
-                    self.actions(s)]
-                
-                value_a_min = min(value_a_tuples, key = lambda value_a: value_a[0])
+                value_a_min = (float('inf'), None)
+                actions_list = self.actions(s)
+                for a in actions_list:
+                    value_temp = self.cost(s,a) + value[(s + a).tostring()]
+                    if  value_temp <= value_a_min[0]:
+                        value_a_min = (value_temp, a)
 
                 #bellman update
-                value[s.tostring()] = value_a_min[0]
-                policy[s.tostring()] = value_a_min[1]
+                value[string_s] = value_a_min[0]
+                policy[string_s] = value_a_min[1]
 
                 if plot:
-                    value_mat[s[0], s[1]] = value[s.tostring()]
+                    value_mat[s[0], s[1]] = value[string_s]
                     Sx.append(s[0])
                     Sy.append(s[1])
-                    Ax.append(policy[s.tostring()][0])
-                    Ay.append(policy[s.tostring()][1])
+                    Ax.append(policy[string_s][0])
+                    Ay.append(policy[string_s][1])
 
             if plot:
                 fig.clear()
                 plt.pcolor(value_mat.T)
                 plt.quiver(Sx, Sy, Ax, Ay)
-                plt.plot([5, world_size - 1],[4, 4], linewidth = 4)
-                plt.plot([4, 4],[5, world_size - 1], linewidth = 4)
                 plt.show()
                 plt.pause(0.00001)
             i += 1
