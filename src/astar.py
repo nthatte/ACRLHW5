@@ -49,34 +49,34 @@ class AStar:
         n0 = node(start_state, None, 0, h0)
 
         heappush(self.PQ,n0)
-        self.PQ_hash[str(n0.state)] = n0
+        self.PQ_hash[n0.state.tostring()] = n0
 
         while self.PQ:
             current = heappop(self.PQ)
             
-            del self.PQ_hash[str(current.state)]
+            del self.PQ_hash[current.state.tostring()]
             if(self.state_is_equal(current.state, goal_state)):
                 return self.reconstruct_path(current)
 
-            self.V[str(current.state)] = current
+            self.V[current.state.tostring()] = current
 
             #get children
 
             children = self.getChildren(current)#do set parent, should return an array of nodes
             
             for child in children:
-                if str(child.state) in self.V:
+                if child.state.tostring() in self.V:
                     continue
                 
-                if (str(child.state) in self.PQ_hash):
-                    existing_child = self.PQ_hash.get(str(child.state))
+                if (child.state.tostring() in self.PQ_hash):
+                    existing_child = self.PQ_hash.get(child.state.tostring())
                     if(child.g >= existing_child.g):
                         continue
                     else:
                         existing_child = child
                 else:
                     heappush(self.PQ,child)
-                    self.PQ_hash[str(child.state)] = child
+                    self.PQ_hash[child.state.tostring()] = child
         
         print 'A* Failed'
         return None   

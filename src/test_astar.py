@@ -23,6 +23,9 @@ class motion_primitive:
     def __init__(self, delta_state):
         self.delta_state = delta_state
 
+    def get_end_state(self, state):
+        return state + self.delta_state 
+
 delta_states = [np.array([ 1,  0]),
                 np.array([ 1,  1]),
                 np.array([ 0,  1]),
