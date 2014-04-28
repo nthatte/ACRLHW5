@@ -28,7 +28,7 @@ class AStar:
         children = []
         for primitive in self.motion_primitives:
             if self.valid_edge(cur_node.state, primitive):
-                new_state = cur_node.state + primitive.delta_state
+                new_state = primitive.get_end_state(cur_node.state) #cur_node.state + primitive.delta_state
                 g = cur_node.g + self.cost(cur_node.state, primitive)
                 h = self.heuristic(new_state, self.goal_state) 
                 child = node(new_state, cur_node, g, h)
