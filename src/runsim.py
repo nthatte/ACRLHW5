@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from astar import AStar
 from astar_fcns import *
 import dubins
-from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE
+from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, MultiPoint
 from shapely.ops import cascaded_union
 
 #*****************************
@@ -73,10 +73,11 @@ tuple_list = []
 for xx in range(0,world_map.shape[0]):
     for yy in range(0,world_map.shape[1]):
         if world_map[yy][xx] == 0.0:
-            tuple_list.append((yy+0.5,xx+0.5))
+            #tuple_list.append((yy+0.5,xx+0.5))
+            tuple_list.append((yy,xx))
 
-polygons = [Point(xx,yy).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (yy,xx) in tuple_list]
-world_polys = cascaded_union(polygons)
+world_polys = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
+#world_polys = cascaded_union(polygons)
 
 #Set up motion primitives
 # Define primitives relative to (0,0,0)

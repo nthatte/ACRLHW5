@@ -5,7 +5,8 @@ import dubins
 import math
 from shapely.geometry import LineString
 from shapely.ops import cascaded_union
-from shapely.geometry import Point
+from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, box
+from shapely import affinity
 
 def wrapToPi(angle):
     return (angle + np.pi) % (2.0 * np.pi ) - np.pi
@@ -21,11 +22,17 @@ class motion_primitive:
     turning_radius = 2.999999
     step_size = 0.1
     def __init__(self, delta_state):
+        length = 3.0
+        width = 2.0
         self.delta_state = delta_state
         self.path,_ = dubins.path_sample((0,0,0), self.delta_state, 
             motion_primitive.turning_radius, motion_primitive.step_size)
         self.cost = dubins.path_length((0,0,0), delta_state, motion_primitive.turning_radius)
         self.path.append(tuple(self.delta_state.tolist()))
+
+        box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
+        polygons = [affinity.rotate(a_box, theta, origin = 'centroid') for (a_box, theta) in box_angle_tuples]
+        self.bounding_poly = cascaded_union(polygons)
 
     def get_end_state(self, start_state):
         return start_state + rotate_state(self.delta_state,start_state[2])
@@ -48,13 +55,11 @@ class dubins_astar:
 
 #    @profile
     def valid_edge(self, state, primitive):
-        prim_states = [state + rotate_state(np.array(st),state[2]) for st in primitive.path]
-        polygons = [Point(x, y).buffer(1) for (x,y,z) in prim_states]
-        #path = [Point(x, y).buffer(1) for (x,y,z) in prim_states]
-        #path = LineString(prim_states)
-        path = cascaded_union(polygons)
+        bounding_poly = affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0))
+        bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
+
         for ob in self.world_polys:
-            if path.intersects(ob):
+            if bounding_poly.intersects(ob):
                 return False        
         return True
         
