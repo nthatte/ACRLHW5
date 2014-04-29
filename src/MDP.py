@@ -12,6 +12,7 @@ class MDP:
         self.converge_thr = converge_thr
 
     "Solve an MDP by value iteration"
+    @profile
     def value_iteration(self, policy = None, value = None, num_iter = 100, plot = False, world_size = 0):
         #initialize policy and value
         if value:

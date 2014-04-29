@@ -5,9 +5,10 @@ from initialize_state import *
 from motionModel import *
 import matplotlib.pyplot as plt
 from astar import AStar
-#from motion_primitive import motion_primitive
-import math
+from astar_fcns import *
 import dubins
+from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE
+from shapely.ops import cascaded_union
 
 #*****************************
 # Load map files and parameters
@@ -65,8 +66,6 @@ DISPLAY_TYPE = 'blocks' # display as dots or blocks
 # finishes in time for you to submit the assignment!
 #
 
-from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE
-from shapely.ops import cascaded_union
 
 world_map = map_struct['seed_map']
 
@@ -80,65 +79,30 @@ polygons = [Point(x,y).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (y,x
 world_polys = cascaded_union(polygons)
 
 
-
-#a = LineString([(0,0),(10,10)])
-#p = PolygonPatch(a.buffer(0.1), fc='#999999', ec='#999999', alpha=1, zorder=2)
-
-#fig = plt.figure(1,figsize = [14,7],dpi = 90)
-#ax = fig.add_subplot(111)
-#ax.add_patch(p)
-
-#for ob in world_polys:
-#    p = PolygonPatch(ob, fc='#999999', ec='#999999', alpha=0.5, zorder=1)
-#    ax.add_patch(p)
-#    print a.intersects(ob)
-
-#xrange = [0, 50]
-#yrange = [0, 50]
-
-#ax.set_xlim(*xrange)
-#ax.set_ylim(*yrange)
-#ax.set_aspect(1)
-
-#plt.show()
-
-    
-from astar_fcns import *
-
-afn = astar_fcns()
-afn.world_polys = world_polys
-
-
 #Set up motion primitives
 # Define primitives relative to (0,0,0)
-delta_states = [np.array([ 2,  0, 0.0]),
-                np.array([ 2,  2, math.pi/2.0]),
-                np.array([ 2, -2, -math.pi/2.0]),
-                np.array([ 2,  2, 0.0]),
-                np.array([ 2, -2, 0.0]),
-                np.array([ 2,  4, math.pi/2.0]),
-                np.array([ 2, -4, -math.pi/2.0]),
-                np.array([ 2,  4, 0.0]),
-                np.array([ 2, -4, 0.0]),
-                np.array([-2,  0, 0.0])]
+delta_states = [np.array([ 3,  0, 0.0]),
+                np.array([ 3,  3, np.pi/2.0]),
+                np.array([ 3, -3, -np.pi/2.0]),
+                np.array([ 3,  3, 0.0]),
+                np.array([ 3, -3, 0.0]),
+                np.array([ 3,  6, np.pi/2.0]),
+                np.array([ 3, -6, -np.pi/2.0]),
+                np.array([ 3,  6, 0.0]),
+                np.array([ 3, -6, 0.0]),
+                np.array([-3,  0, 0.0])]
 
 turning_radius = 2
 motion_primitives = []
 for i in range(0,len(delta_states)):
-    cost = dubins.path_length((0,0,0), delta_states[i], turning_radius)
-    motion_primitives.append(motion_primitive(delta_states[i],cost))
-
+    motion_primitives.append(motion_primitive(delta_states[i]))
     
+#set up dubins astar
+dub = dubins_astar(world_polys)
+
 #Set up A Star
-astar = AStar(motion_primitives, cost_function, heuristic, afn.valid_edge_function, state_equality)
-
-
-
-# Example:
-#
-# myPolicy_struct = solve_mdp(params, map_struct, ...)
-# ...
-
+astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
+    dub.valid_edge, dub.state_equality)
 
 
 #*****************************
@@ -189,49 +153,17 @@ for i in range(0,len(map_struct['map_samples'])):
                 astar_state = np.array([0,0,0]) # TODO
             astar_goal = np.array([goal[0],goal[1],0])
             plan = astar.plan(astar_state, astar_goal)
-            path_states = get_xytheta_paths(plan)
-            path = np.array(path_states)
+            path_states = motion_primitive.get_xytheta_paths(plan)
 
-            #print path_states
-            action = .1 #TODO
-            
-        else:
-            #execute plan - TODO
-            curr_state = np.array([state['x'],state['y'],state['theta']])
-            err_vec = path_states - curr_state
-            dists = np.sum(np.abs(err_vec)**2,axis=-1)
-            idx = np.argmin(dists)
-            min_dist = dists[idx]
-            
-            if min_dist < 0.1 and idx < len(dists):
-                idx += 1
-            
-            Kp = 100
-            err = wrapToPi(curr_state[2] - np.arctan2(err_vec[idx][1],err_vec[idx][0]))            
-            action = -Kp*err
-            action = np.median([-1, 1, action])
+        #compute action
+        action = dub.control_policy(state, path_states)
         
-        # Notice how with this policy, when the car gets close to the
-        # unknown bridge (in map_1), on the first map sample the bridge 
-        # becomes solid black (closed), and on the second map sample the 
-        # bridge becomes white (open). Until the bridge is either 1 (white)
-        # 
-        # or 0 (black), you should treat it as unknown. 
-        #
-        # For display purposes, the unknown bridge is shown as a gray shade
-        # proportional to its probability of being closed.
-  
-        #
-        #
-        #---------------------------------------
-        #
-        #
         # Execute the action and update observed_map
         (state, observed_map, flags) = motionModel(params, state, action,
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            display_environment(x, y, state, map_struct, params, observed_map, scale, path)
+            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
