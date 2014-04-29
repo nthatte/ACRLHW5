@@ -4,10 +4,10 @@ from scipy.misc import imresize
 import time
 import pdb
 
-def display_environment(x, y, state, map_struct, params, observed_map, scale, path=numpy.zeros((1,2)), DISPLAY_TYPE = 'blocks'):
+def display_environment(x, y, state, map_struct, params, observed_map, scale, path=numpy.zeros((1,2)), carrot_idx=0, DISPLAY_TYPE = 'blocks'):
     if plt.fignum_exists(1):
         if DISPLAY_TYPE == 'blocks':
-            display_environment.environ.set_data(imresize(observed_map, scale, interp='nearest'))
+            display_environment.environ.set_data(imresize(observed_map-0.5, scale, interp='nearest'))
     
         elif DISPLAY_TYPE == 'dots':
             ind = numpy.where(observed_map == 0)
@@ -26,6 +26,8 @@ def display_environment(x, y, state, map_struct, params, observed_map, scale, pa
                 + params['length']/2*numpy.sin(state['theta'])]))
         display_environment.l6.set_xdata(scale*path[:,0])
         display_environment.l6.set_ydata(scale*path[:,1])
+        display_environment.l7.set_xdata(scale*path[carrot_idx,0])
+        display_environment.l7.set_ydata(scale*path[carrot_idx,1])
 
     else:
         plt.ion()
@@ -34,7 +36,7 @@ def display_environment(x, y, state, map_struct, params, observed_map, scale, pa
         ax = display_environment.fig.add_subplot(111, aspect = 'equal')
 
         if DISPLAY_TYPE == 'blocks':
-            display_environment.environ = plt.imshow(imresize(observed_map, scale, interp='nearest'))
+            display_environment.environ = plt.imshow(imresize(observed_map-0.5, scale, interp='nearest'))
 
         elif DISPLAY_TYPE == 'dots':
             ind = numpy.where(observed_map == 0)
@@ -57,6 +59,8 @@ def display_environment(x, y, state, map_struct, params, observed_map, scale, pa
                 + params['length']/2*numpy.sin(state['theta'])]),color = 'b')
 
         display_environment.l6, = plt.plot(scale*path[:,0],scale*path[:,1],color='k')
+
+        display_environment.l7, = plt.plot(scale*path[carrot_idx,0],scale*path[carrot_idx,1],'.',color='#EB8921',markersize=2*scale)
         
     plt.axis((0, 500, 0, 500))
     plt.axis('off')

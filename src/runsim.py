@@ -154,6 +154,7 @@ for i in range(0,len(map_struct['map_samples'])):
             astar_goal = np.array([goal[0],goal[1],0])
             plan = astar.plan(astar_state, astar_goal)
             path_states = motion_primitive.get_xytheta_paths(plan)
+            dub.last_idx = 0
 
         #compute action
         action = dub.control_policy(state, path_states)
@@ -163,7 +164,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states, DISPLAY_TYPE)
+            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states, dub.last_idx+10, DISPLAY_TYPE)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']

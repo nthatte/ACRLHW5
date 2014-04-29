@@ -39,11 +39,12 @@ class motion_primitive:
         return np.array(path)
 
 class dubins_astar:
-    def __init__(self, world_polys, Kp = 100, look_ahead_dist = 0.1):
+    def __init__(self, world_polys, Kp = 10000, look_ahead_dist = 0.1):
         self.world_polys = world_polys
         self.Kp = Kp
         self.look_ahead_dist = look_ahead_dist
-    
+        self.last_idx = 0
+
     def valid_edge(self, state, primitive):
         prim_states = [state + rotate_state(np.array(st),state[2]) for st in primitive.path]
         polygons = [Point(x, y).buffer(1) for (x,y,z) in prim_states]
@@ -59,20 +60,31 @@ class dubins_astar:
         return np.sqrt(state_diff[0]**2 + state_diff[1]**2)
 
     def control_policy(self, state, path_states):
+            
         curr_state = np.array([state['x'],state['y'],state['theta']])
-        err_vec = path_states - curr_state
+        err_vec = path_states[self.last_idx:] - curr_state
         dists = np.sum(np.abs(err_vec)**2,axis=-1)
         idx = np.argmin(dists)
-        min_dist = dists[idx]
+        
+        self.last_idx += idx
+        
+        idx += 10
+        #min_dist = dists[idx]
             
-        if min_dist < self.look_ahead_dist and idx < len(dists):
-            idx += 1
+        #if min_dist < self.look_ahead_dist:
+        #    idx += 10
+        
+        if idx > len(dists):
+            idx = len(dists)
+        
 
+        
         err = wrapToPi(curr_state[2] - np.arctan2(err_vec[idx][1],err_vec[idx][0]))            
         action = -self.Kp*err
         action = np.median([-1, 1, action])
         return action
-
+    
+    
     def cost_function(self, state, motion_primitive):
         return motion_primitive.cost # + belief cost
 
