@@ -92,17 +92,20 @@ delta_states = [np.array([ 3,  0, 0.0]),
                 np.array([ 3, -6, 0.0]),
                 np.array([-3,  0, 0.0])]
 
-turning_radius = 2
+print 'Generating motion primitives...'
 motion_primitives = []
 for i in range(0,len(delta_states)):
     motion_primitives.append(motion_primitive(delta_states[i]))
-    
+
 #set up dubins astar
 dub = dubins_astar(world_polys)
+print 'done'
 
+print 'Planning...'
 #Set up A Star
 astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
     dub.valid_edge, dub.state_equality)
+print 'done'
 
 
 #*****************************

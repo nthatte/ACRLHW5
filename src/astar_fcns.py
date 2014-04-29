@@ -18,13 +18,14 @@ def rotate_state(state, angle):
     return rot_state
 
 class motion_primitive:
-    turning_radius = 3
+    turning_radius = 2
     step_size = 0.1
     def __init__(self, delta_state):
         self.delta_state = delta_state
         self.path,_ = dubins.path_sample((0,0,0), self.delta_state, 
             motion_primitive.turning_radius, motion_primitive.step_size)
         self.cost = dubins.path_length((0,0,0), delta_state, motion_primitive.turning_radius)
+        self.path.append(tuple(self.delta_state.tolist()))
 
     def get_end_state(self, start_state):
         return start_state + rotate_state(self.delta_state,start_state[2])
