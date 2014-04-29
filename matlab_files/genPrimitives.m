@@ -1,13 +1,19 @@
 function genPrimitives()
+
+addpath('./dubins/')
+
 global params;
 load_sim_params;
 
-params.numsteps = 150;
 params.goal = [5;10;pi/2];
+p = dubins([0;0;0]',params.goal', 3, .5);
+nsteps = ceil(1.5*sum(sum(diff(p(1:2,:),[],2).^2))/(params.r_radius*params.d_theta_nom));
+
+params.numsteps = nsteps;
 
 
 A = [eye(params.numsteps); -eye(params.numsteps)];
-b = [ones(params.numsteps,1);ones(params.numsteps,1)*1.1];
+b = [ones(params.numsteps,1);ones(params.numsteps,1)];
 u0 = zeros(params.numsteps,1);
 % u = fmincon(@fn,u0,A,b);%,[],[],[],[],@nlcon);
 options = optimset('MaxFunEvals',1e5,'TolCon',1e-6,'MaxIter',1e3);
@@ -37,7 +43,7 @@ for ii=1:params.numsteps
 end
 
 
-f = norm(u(u>=-1)) + 1e2*norm(state-params.goal);
+f = norm(u(u>=-1)) + 1e2*norm(state-params.goal) - 1e6*sum(u<-1);
 end
 
 
@@ -48,7 +54,7 @@ x = state(1);
 y = state(2);
 theta = state(3);
 
-if u >= -1
+% if u >= -1
     r_dTheta = params.d_theta_nom + params.d_theta_max_dev*u;
     l_dTheta = params.d_theta_nom - params.d_theta_max_dev*u;
 
@@ -68,7 +74,7 @@ if u >= -1
     theta = wrapToPi(theta + (R-L)/params.wb);
     
     state = [x;y;theta];
-end
+% end
 
 
 end

@@ -4,7 +4,7 @@ from scipy.misc import imresize
 import time
 import pdb
 
-def display_environment(x, y, state, map_struct, params, observed_map, scale, DISPLAY_TYPE = 'blocks'):
+def display_environment(x, y, state, map_struct, params, observed_map, scale, path=numpy.zeros((1,2)), DISPLAY_TYPE = 'blocks'):
     if plt.fignum_exists(1):
         if DISPLAY_TYPE == 'blocks':
             display_environment.environ.set_data(imresize(observed_map, scale, interp='nearest'))
@@ -24,6 +24,8 @@ def display_environment(x, y, state, map_struct, params, observed_map, scale, DI
                 + params['length']/2*numpy.cos(state['theta'])]))
         display_environment.l5.set_ydata(scale*numpy.array([state['y'], state['y'] 
                 + params['length']/2*numpy.sin(state['theta'])]))
+        display_environment.l6.set_xdata(scale*path[:,0])
+        display_environment.l6.set_ydata(scale*path[:,1])
 
     else:
         plt.ion()
@@ -54,6 +56,8 @@ def display_environment(x, y, state, map_struct, params, observed_map, scale, DI
             scale*numpy.array([state['y'], state['y'] 
                 + params['length']/2*numpy.sin(state['theta'])]),color = 'b')
 
+        display_environment.l6, = plt.plot(scale*path[:,0],scale*path[:,1],color='k')
+        
     plt.axis((0, 500, 0, 500))
     plt.axis('off')
     plt.draw()

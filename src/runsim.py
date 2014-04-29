@@ -5,7 +5,6 @@ from initialize_state import *
 from motionModel import *
 import matplotlib.pyplot as plt
 from astar import AStar
-from astar_fcns import heuristic, valid_edge_function, state_equality, rotate_state, cost_function, motion_primitive, get_xytheta_paths, wrapToPi
 #from motion_primitive import motion_primitive
 import math
 import dubins
@@ -66,20 +65,62 @@ DISPLAY_TYPE = 'blocks' # display as dots or blocks
 # finishes in time for you to submit the assignment!
 #
 
+from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE
+from shapely.ops import cascaded_union
+
+world_map = map_struct['seed_map']
+
+tuple_list = []
+for xx in range(0,world_map.shape[0]):
+    for yy in range(0,world_map.shape[1]):
+        if world_map[yy][xx] == 0.0:
+            tuple_list.append((yy+0.5,xx+0.5))
+
+polygons = [Point(x,y).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (y,x) in tuple_list]
+world_polys = cascaded_union(polygons)
+
+
+
+#a = LineString([(0,0),(10,10)])
+#p = PolygonPatch(a.buffer(0.1), fc='#999999', ec='#999999', alpha=1, zorder=2)
+
+#fig = plt.figure(1,figsize = [14,7],dpi = 90)
+#ax = fig.add_subplot(111)
+#ax.add_patch(p)
+
+#for ob in world_polys:
+#    p = PolygonPatch(ob, fc='#999999', ec='#999999', alpha=0.5, zorder=1)
+#    ax.add_patch(p)
+#    print a.intersects(ob)
+
+#xrange = [0, 50]
+#yrange = [0, 50]
+
+#ax.set_xlim(*xrange)
+#ax.set_ylim(*yrange)
+#ax.set_aspect(1)
+
+#plt.show()
+
+    
+from astar_fcns import *
+
+afn = astar_fcns()
+afn.world_polys = world_polys
 
 
 #Set up motion primitives
 # Define primitives relative to (0,0,0)
-delta_states = [np.array([ 5,  0, 0.0]),
-                np.array([ 5,  5, math.pi/2.0]),
-                np.array([ 5, -5, -math.pi/2.0]),
-                np.array([ 5,  5, 0.0]),
-                np.array([ 5, -5, 0.0]),
-                np.array([ 5,  10, math.pi/2.0]),
-                np.array([ 5, -10, -math.pi/2.0]),
-                np.array([ 5,  10, 0.0]),
-                np.array([ 5, -10, 0.0]),
-                np.array([-1,  0, 0.0])]
+delta_states = [np.array([ 2,  0, 0.0]),
+                np.array([ 2,  2, math.pi/2.0]),
+                np.array([ 2, -2, -math.pi/2.0]),
+                np.array([ 2,  2, 0.0]),
+                np.array([ 2, -2, 0.0]),
+                np.array([ 2,  4, math.pi/2.0]),
+                np.array([ 2, -4, -math.pi/2.0]),
+                np.array([ 2,  4, 0.0]),
+                np.array([ 2, -4, 0.0]),
+                np.array([-2,  0, 0.0])]
 
 turning_radius = 2
 motion_primitives = []
@@ -89,7 +130,7 @@ for i in range(0,len(delta_states)):
 
     
 #Set up A Star
-astar = AStar(motion_primitives, cost_function, heuristic, valid_edge_function, state_equality)
+astar = AStar(motion_primitives, cost_function, heuristic, afn.valid_edge_function, state_equality)
 
 
 
@@ -149,8 +190,10 @@ for i in range(0,len(map_struct['map_samples'])):
             astar_goal = np.array([goal[0],goal[1],0])
             plan = astar.plan(astar_state, astar_goal)
             path_states = get_xytheta_paths(plan)
-            print path_states
-            action = .1
+            path = np.array(path_states)
+
+            #print path_states
+            action = .1 #TODO
             
         else:
             #execute plan - TODO
@@ -188,7 +231,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            display_environment(x, y, state, map_struct, params, observed_map, scale)
+            display_environment(x, y, state, map_struct, params, observed_map, scale, path)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
