@@ -41,7 +41,7 @@ scale = 10.0
 (x,y) = np.meshgrid(np.arange(1,N+1), np.arange(1,M+1))
 
 DISPLAY_ON = 1 # 1 - turns display on, 0 - turns display off
-DISPLAY_TYPE = 'blocks' # display as dots or blocks
+DISPLAY_TYPE = 'dots' # display as dots or blocks
 
 #*****************************
 # Training/Learning Phase
@@ -75,7 +75,7 @@ for xx in range(0,world_map.shape[0]):
         if world_map[yy][xx] == 0.0:
             tuple_list.append((yy+0.5,xx+0.5))
 
-polygons = [Point(x,y).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (y,x) in tuple_list]
+polygons = [Point(xx,yy).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (yy,xx) in tuple_list]
 world_polys = cascaded_union(polygons)
 
 
@@ -127,7 +127,7 @@ for i in range(0,len(map_struct['map_samples'])):
 
     # display the initial state
     if DISPLAY_ON:
-        display_environment(x, y, state, map_struct, params, observed_map, scale)
+        display_environment(x, y, state, map_struct, params, observed_map, scale, DISPLAY_TYPE = DISPLAY_TYPE)
 
     # loop until maxCount has been reached or goal is found
     loopCounter = 0;
@@ -163,7 +163,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states)
+            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states, DISPLAY_TYPE)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
