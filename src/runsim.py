@@ -1,13 +1,14 @@
-import numpy
+import numpy as np
 import pdb
 from display_environment import *
 from initialize_state import *
 from motionModel import *
 import matplotlib.pyplot as plt
 from astar import AStar
-from astar_fcns import heuristic, valid_edge_function, state_equality, rotate_state, cost_function
-from motion_primitive import motion_primitive
+from astar_fcns import heuristic, valid_edge_function, state_equality, rotate_state, cost_function, motion_primitive, get_xytheta_paths, wrapToPi
+#from motion_primitive import motion_primitive
 import math
+import dubins
 
 #*****************************
 # Load map files and parameters
@@ -37,7 +38,7 @@ scale = 10.0
 # determines the size of the map and creates a meshgrid for display
 # purposes
 (N,M) = map_struct['seed_map'].shape
-(x,y) = numpy.meshgrid(numpy.arange(1,N+1), numpy.arange(1,M+1))
+(x,y) = np.meshgrid(np.arange(1,N+1), np.arange(1,M+1))
 
 DISPLAY_ON = 1 # 1 - turns display on, 0 - turns display off
 DISPLAY_TYPE = 'blocks' # display as dots or blocks
@@ -67,7 +68,26 @@ DISPLAY_TYPE = 'blocks' # display as dots or blocks
 
 
 
-#Set up motion primitives-TODO
+#Set up motion primitives
+# Define primitives relative to (0,0,0)
+delta_states = [np.array([ 5,  0, 0.0]),
+                np.array([ 5,  5, math.pi/2.0]),
+                np.array([ 5, -5, -math.pi/2.0]),
+                np.array([ 5,  5, 0.0]),
+                np.array([ 5, -5, 0.0]),
+                np.array([ 5,  10, math.pi/2.0]),
+                np.array([ 5, -10, -math.pi/2.0]),
+                np.array([ 5,  10, 0.0]),
+                np.array([ 5, -10, 0.0]),
+                np.array([-1,  0, 0.0])]
+
+turning_radius = 2
+motion_primitives = []
+for i in range(0,len(delta_states)):
+    cost = dubins.path_length((0,0,0), delta_states[i], turning_radius)
+    motion_primitives.append(motion_primitive(delta_states[i],cost))
+
+    
 #Set up A Star
 astar = AStar(motion_primitives, cost_function, heuristic, valid_edge_function, state_equality)
 
@@ -121,15 +141,32 @@ for i in range(0,len(map_struct['map_samples'])):
         #we should run the AStar algorithm on the currently observed map using motion
         #primitives generated offline. If the current path is valid, we should just
         #execute the next step in it.
-        if(invalidPath(path, observed_map) or loopCounter == 0):
-            astar_state = 
-            astar_goal = 
+        if(loopCounter == 0): #or invalidPath(path, observed_map)):
+            if loopCounter == 0:
+                astar_state = np.array([state['x'],state['y'],state['theta']])
+            else:
+                astar_state = np.array([0,0,0]) # TODO
+            astar_goal = np.array([goal[0],goal[1],0])
             plan = astar.plan(astar_state, astar_goal)
+            path_states = get_xytheta_paths(plan)
+            print path_states
+            action = .1
+            
         else:
             #execute plan - TODO
-        
-        # My example policy: slight turn
-        action = .1
+            curr_state = np.array([state['x'],state['y'],state['theta']])
+            err_vec = path_states - curr_state
+            dists = np.sum(np.abs(err_vec)**2,axis=-1)
+            idx = np.argmin(dists)
+            min_dist = dists[idx]
+            
+            if min_dist < 0.1 and idx < len(dists):
+                idx += 1
+            
+            Kp = 100
+            err = wrapToPi(curr_state[2] - np.arctan2(err_vec[idx][1],err_vec[idx][0]))            
+            action = -Kp*err
+            action = np.median([-1, 1, action])
         
         # Notice how with this policy, when the car gets close to the
         # unknown bridge (in map_1), on the first map sample the bridge 
@@ -158,3 +195,5 @@ for i in range(0,len(map_struct['map_samples'])):
         
         # pause if you'd like to pause at each step
         # pause
+        
+        loopCounter += 1
