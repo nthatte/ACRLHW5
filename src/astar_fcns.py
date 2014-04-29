@@ -22,8 +22,8 @@ class motion_primitive:
     turning_radius = 2.999999
     step_size = 0.1
     def __init__(self, delta_state):
-        length = 3.0
-        width = 2.0
+        length = 3.1
+        width = 2.1
         self.delta_state = delta_state
         self.path,_ = dubins.path_sample((0,0,0), self.delta_state, 
             motion_primitive.turning_radius, motion_primitive.step_size)
@@ -58,9 +58,11 @@ class dubins_astar:
         bounding_poly = affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0))
         bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
 
-        for ob in self.world_polys:
-            if bounding_poly.intersects(ob):
-                return False        
+        if bounding_poly.intersects(self.world_polys):
+            return False
+        #for ob in self.world_polys:
+        #    if bounding_poly.intersects(ob):
+        #        return False        
         return True
         
     def heuristic(self, state1, state2):
