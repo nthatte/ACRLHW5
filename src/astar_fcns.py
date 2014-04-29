@@ -4,6 +4,8 @@ import pdb
 import dubins
 import math
 from shapely.geometry import LineString
+from shapely.ops import cascaded_union
+from shapely.geometry import Point
 
 def wrapToPi(angle):
     return (angle + np.pi) % (2.0 * np.pi ) - np.pi
@@ -44,8 +46,9 @@ class dubins_astar:
     
     def valid_edge(self, state, primitive):
         prim_states = [state + rotate_state(np.array(st),state[2]) for st in primitive.path]
-        path = LineString(prim_states)
-        
+        polygons = [Point(x, y).buffer(1) for (x,y,z) in prim_states]
+        #path = LineString(prim_states)
+        path = cascaded_union(polygons)
         for ob in self.world_polys:
             if path.intersects(ob):
                 return False        
