@@ -78,19 +78,12 @@ for xx in range(0,world_map.shape[0]):
 polygons = [Point(xx,yy).buffer(0.5,16,CAP_STYLE.square,JOIN_STYLE.bevel) for (yy,xx) in tuple_list]
 world_polys = cascaded_union(polygons)
 
-
 #Set up motion primitives
 # Define primitives relative to (0,0,0)
-delta_states = [np.array([ 3,  0, 0.0]),
+delta_states = [np.array([ 1,  0, 0.0]),
                 np.array([ 3,  3, np.pi/2.0]),
                 np.array([ 3, -3, -np.pi/2.0]),
-                np.array([ 3,  3, 0.0]),
-                np.array([ 3, -3, 0.0]),
-                np.array([ 3,  6, np.pi/2.0]),
-                np.array([ 3, -6, -np.pi/2.0]),
-                np.array([ 3,  6, 0.0]),
-                np.array([ 3, -6, 0.0]),
-                np.array([-3,  0, 0.0])]
+                np.array([-1,  0, 0.0])]
 
 print 'Generating motion primitives...'
 motion_primitives = []
@@ -101,11 +94,9 @@ for i in range(0,len(delta_states)):
 dub = dubins_astar(world_polys)
 print 'done'
 
-print 'Planning...'
 #Set up A Star
 astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
     dub.valid_edge, dub.state_equality)
-print 'done'
 
 
 #*****************************
@@ -150,6 +141,7 @@ for i in range(0,len(map_struct['map_samples'])):
         #primitives generated offline. If the current path is valid, we should just
         #execute the next step in it.
         if(loopCounter == 0): #or invalidPath(path, observed_map)):
+            print 'Planning...'
             if loopCounter == 0:
                 astar_state = np.array([state['x'],state['y'],state['theta']])
             else:
@@ -158,6 +150,7 @@ for i in range(0,len(map_struct['map_samples'])):
             plan = astar.plan(astar_state, astar_goal)
             path_states = motion_primitive.get_xytheta_paths(plan)
             dub.last_idx = 0
+            print 'done'
 
         #compute action
         action = dub.control_policy(state, path_states)

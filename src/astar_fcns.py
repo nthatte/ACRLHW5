@@ -18,7 +18,7 @@ def rotate_state(state, angle):
     return rot_state
 
 class motion_primitive:
-    turning_radius = 2
+    turning_radius = 2.999999
     step_size = 0.1
     def __init__(self, delta_state):
         self.delta_state = delta_state
@@ -46,9 +46,11 @@ class dubins_astar:
         self.look_ahead_dist = look_ahead_dist
         self.last_idx = 0
 
+#    @profile
     def valid_edge(self, state, primitive):
         prim_states = [state + rotate_state(np.array(st),state[2]) for st in primitive.path]
         polygons = [Point(x, y).buffer(1) for (x,y,z) in prim_states]
+        #path = [Point(x, y).buffer(1) for (x,y,z) in prim_states]
         #path = LineString(prim_states)
         path = cascaded_union(polygons)
         for ob in self.world_polys:
