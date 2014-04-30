@@ -47,11 +47,13 @@ class motion_primitive:
         return np.array(path)
 
 class dubins_astar:
-    def __init__(self, world_polys, Kp = 10000, look_ahead_dist = 0.1):
+    def __init__(self, world_polys, Kp = 1000.0, Kd = 200.0, look_ahead_dist = 0.9):
         self.world_polys = world_polys
         self.Kp = Kp
+        self.Kd = Kd
         self.look_ahead_dist = look_ahead_dist
         self.last_idx = 0
+        self.last_err = 0.0
 
 #    @profile
     def valid_edge(self, state, primitive):
@@ -72,31 +74,31 @@ class dubins_astar:
     def control_policy(self, state, path_states):
             
         curr_state = np.array([state['x'],state['y'],state['theta']])
-        err_vec = path_states[self.last_idx:] - curr_state
-        dists = np.sum(np.abs(err_vec)**2,axis=-1)
+        err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states[self.last_idx:]]
+        dists = np.sqrt(np.sum(np.abs(err_vec)**2,axis=-1))
         idx = np.argmin(dists)
         
-        self.last_idx += idx
-        
-        idx += 10
-        #min_dist = dists[idx]
-            
-        #if min_dist < self.look_ahead_dist:
-        #    idx += 10
+        while dists[idx] < self.look_ahead_dist:
+            idx += 1
         
         if idx > len(dists):
             idx = len(dists)
         
-
+        self.last_idx += idx
         
-        err = wrapToPi(curr_state[2] - np.arctan2(err_vec[idx][1],err_vec[idx][0]))            
-        action = -self.Kp*err
+        err = wrapToPi(curr_state[2] - np.arctan2(err_vec[idx][1],err_vec[idx][0]))
+        action = -self.Kp*err - self.Kd*(err-self.last_err)  + path_states[idx][2]
         action = np.median([-1, 1, action])
+        
+        self.last_err = err
         return action
     
     
     def cost_function(self, state, motion_primitive):
-        return motion_primitive.cost # + belief cost
+        cost = motion_primitive.cost - 0.5*state[0]
+        if cost <= 0:
+            cost = 0.1
+        return cost# + belief cost
 
     def state_equality(self, state1, state2):
         anglecheck = wrapToPi(state1[2]-state2[2])

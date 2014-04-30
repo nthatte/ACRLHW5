@@ -161,7 +161,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states, dub.last_idx+10, DISPLAY_TYPE)
+            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states, dub.last_idx, DISPLAY_TYPE)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
