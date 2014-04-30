@@ -8,6 +8,7 @@ from shapely.ops import cascaded_union
 from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, box
 from shapely import affinity
 from descartes import PolygonPatch
+import cPickle as pickle
 
 def wrapToPi(angle):
     return (angle + np.pi) % (2.0 * np.pi ) - np.pi
@@ -34,7 +35,6 @@ class motion_primitive:
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
         self.bounding_poly = cascaded_union(polygons)
 
-
     def get_end_state(self, start_state):
         return start_state + rotate_state(self.delta_state,start_state[2])
             
@@ -56,15 +56,18 @@ class dubins_astar:
         self.last_idx = 0
         self.last_err = 0.0
 
+        with open('map1value.pickle') as handle:
+            self.value_fcn = pickle.load(handle)
+
         world_polys = [pt.buffer(0.5, 16, CAP_STYLE.square, JOIN_STYLE.bevel) for pt in world_points]
         self.world_polys = cascaded_union(world_polys)
 
-    def valid_edge(self, state, primitive, plot_edge = False):
+    def valid_edge(self, state, primitive):
 
         bounding_poly = affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0), use_radians = True)
         bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
 
-        if plot_edge:
+        if False:
             if bounding_poly.intersects(self.world_points):
                 color = 'r'
             else:
@@ -83,7 +86,7 @@ class dubins_astar:
             polyPatch = ax.add_patch(P)
             pathPlot, = ax.plot(pathx, pathy)
             ax.set_xlim(0,50)
-            ax.set_ylim(0,25)
+            ax.set_ylim(0,50)
             fig.show()
             plt.pause(0.1)
 
@@ -92,9 +95,11 @@ class dubins_astar:
             return False
         return True
         
+
     def heuristic(self, state1, state2):
-        state_diff = state1 - state2
-        return np.sqrt(state_diff[0]**2 + state_diff[1]**2)
+        #state_diff = state1 - state2
+        #return np.sqrt(state_diff[0]**2 + state_diff[1]**2)
+        return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
             
@@ -120,10 +125,13 @@ class dubins_astar:
     
     
     def cost_function(self, state, motion_primitive):
+        ''' wtf vishnu
         cost = motion_primitive.cost - 0.5*state[0]
         if cost <= 0:
             cost = 0.1
         return cost# + belief cost
+        '''
+        return motion_primitive.cost 
 
     def state_equality(self, state1, state2):
         anglecheck = wrapToPi(state1[2]-state2[2])

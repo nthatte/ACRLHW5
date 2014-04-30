@@ -17,8 +17,6 @@ from shapely.ops import cascaded_union
 import scipy.io as sio
 
 filename = 'map_1.mat'
-#load map_2.mat;
-#load map_3.mat;
 map_struct_packed = sio.loadmat(filename, squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -81,9 +79,11 @@ world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
 
 #Set up motion primitives
 # Define primitives relative to (0,0,0)
-delta_states = [np.array([ 1,  0, 0.0]),
-                np.array([ 3,  3, np.pi/2.0]),
-                np.array([ 3, -3, -np.pi/2.0])]
+delta_states = [np.array([ 1.0,  0, 0.0]),
+                np.array([ 3.0,  3.0, np.pi/2.0]),
+                np.array([ 3.0, -3.0, -np.pi/2.0])]
+                #np.array([ 3.0/np.sqrt(2),  3.0 -3.0/np.sqrt(2), np.pi/4.0]),
+                #np.array([ 3.0/np.sqrt(2),  -3.0 +3.0/np.sqrt(2), -np.pi/4.0])]
                 #np.array([-1,  0, 0.0])]
 
 print 'Generating motion primitives...'
@@ -118,7 +118,6 @@ for i in range(0,len(map_struct['map_samples'])):
     # observed_map is set to seed map, and the bridge information will be
     # updated once the car is within params.observation_radius
     state, observed_map, flags, goal = init_state(map_struct, params)    
-    pdb.set_trace()
 
     # display the initial state
     if DISPLAY_ON:
@@ -127,7 +126,7 @@ for i in range(0,len(map_struct['map_samples'])):
 
     # loop until maxCount has been reached or goal is found
     loopCounter = 0;
-    while (state['moveCount'] < params['max_moveCount']) and flags != 2:
+    while (state['moveCount'] < params['max_moveCount']) and flags == 0:
 
         #---------------------------------------
         #
@@ -149,7 +148,7 @@ for i in range(0,len(map_struct['map_samples'])):
             else:
                 astar_state = np.array([0,0,0]) # TODO
             astar_goal = np.array([goal[0],goal[1],0])
-            plan = astar.plan(astar_state, astar_goal)
+            plan, cost = astar.plan(astar_state, astar_goal)
             path_states = motion_primitive.get_xytheta_paths(plan)
             dub.last_idx = 0
             print 'done'
@@ -162,7 +161,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            disp.plot(x, y, state, observed_map, path_states, dub.last_idx+10)
+            disp.plot(x, y, state, observed_map, path_states, dub.last_idx)#, dub.last_idx+10)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
@@ -172,3 +171,7 @@ for i in range(0,len(map_struct['map_samples'])):
         
         loopCounter += 1
     del(disp)
+    if flags == 1:
+        print 'reached goal!'
+    elif flags == 2:
+        print 'collision!'

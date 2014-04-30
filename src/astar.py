@@ -14,9 +14,6 @@ class node:
 
 class AStar:
     def __init__(self, motion_primitives, cost_function, heuristic_function, valid_edge_function, state_equality_function):
-        self.PQ = []
-        self.PQ_hash = {}
-        self.V = {}
 
         self.motion_primitives = motion_primitives
         self.cost = cost_function
@@ -44,39 +41,47 @@ class AStar:
         return path
 
     def plan(self, start_state, goal_state):
+        PQ = []
+        PQ_hash = {}
+        V = {}
+
         self.goal_state = goal_state
         h0 = self.heuristic(start_state, goal_state)
         n0 = node(start_state, None, 0, h0)
 
-        heappush(self.PQ,n0)
-        self.PQ_hash[n0.state.tostring()] = n0
+        heappush(PQ,n0)
+        PQ_hash[n0.state.tostring()] = n0
 
-        while self.PQ:
-            current = heappop(self.PQ)
+        i = 0 
+        while PQ:
+            current = heappop(PQ)
             
-            del self.PQ_hash[current.state.tostring()]
+            del PQ_hash[current.state.tostring()]
             if(self.state_is_equal(current.state, goal_state)):
-                return self.reconstruct_path(current)
+                return (self.reconstruct_path(current), current.f)
 
-            self.V[current.state.tostring()] = current
+            V[current.state.tostring()] = current
 
             #get children
 
             children = self.getChildren(current)#do set parent, should return an array of nodes
             
             for child in children:
-                if child.state.tostring() in self.V:
+                i += 1
+                if i%100 == 0:
+                    print 'iteration '+str(i)
+                if child.state.tostring() in V:
                     continue
                 
-                if (child.state.tostring() in self.PQ_hash):
-                    existing_child = self.PQ_hash.get(child.state.tostring())
+                if (child.state.tostring() in PQ_hash):
+                    existing_child = PQ_hash.get(child.state.tostring())
                     if(child.g >= existing_child.g):
                         continue
                     else:
                         existing_child = child
                 else:
-                    heappush(self.PQ,child)
-                    self.PQ_hash[child.state.tostring()] = child
+                    heappush(PQ,child)
+                    PQ_hash[child.state.tostring()] = child
         
         print 'A* Failed'
         return None   
