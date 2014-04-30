@@ -12,7 +12,6 @@ class MDP:
         self.converge_thr = converge_thr
 
     "Solve an MDP by value iteration"
-    @profile
     def value_iteration(self, policy = None, value = None, num_iter = 100, plot = False, world_size = 0):
         #initialize policy and value
         if value:
@@ -62,7 +61,7 @@ class MDP:
                 total_value += value[string_s]
 
                 if plot:
-                    value_mat[s[0], s[1]] = value[string_s]
+                    value_mat[s[0]-1, s[1]-1] = value[string_s]
                     Sx.append(s[0])
                     Sy.append(s[1])
                     Ax.append(policy[string_s][0])
@@ -116,7 +115,7 @@ class MDP:
                 total_value += value[string_s]
 
                 if plot:
-                    value_mat[s[0], s[1]] = value[string_s]
+                    value_mat[s[0] -1, s[1] -1] = value[string_s]
                     Sx.append(s[0])
                     Sy.append(s[1])
                     Ax.append(policy[string_s][0])
