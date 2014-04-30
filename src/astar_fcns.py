@@ -39,7 +39,8 @@ class motion_primitive:
         self.bounding_poly = cascaded_union(polygons)
 
     def get_end_state(self, start_state):
-        end_state = start_state + self.delta_state
+        offset = np.array((start_state[0], start_state[1], 0.0))
+        end_state = offset + self.delta_state
         end_state[2] = wrapToPi(end_state[2])
         return end_state #rotate_state(self.delta_state,start_state[2])
             
@@ -72,7 +73,12 @@ class dubins_astar:
         bounding_poly = primitive.bounding_poly #affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0), use_radians = True)
         bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
 
-        if True:
+        #Drawing Primitive-TAKE OUT TODO
+
+        if False:
+            xypoints = [(x+state[0],y+state[1]) for (x,y,z) in primitive.path]
+            aaa = LineString(xypoints)
+            p1 = PolygonPatch(aaa.buffer(0.1), fc="#999999", ec = '#999999',alpha=1,zorder=9)
             if bounding_poly.intersects(self.world_points):
                 color = 'r'
             else:
@@ -84,6 +90,7 @@ class dubins_astar:
             fig.clear()
             plt.ion()
             ax = fig.add_subplot(111, aspect = 'equal')
+            ax.add_patch(p1)
             for poly in self.world_polys:
                 P = PolygonPatch(poly, fc = 'k', zorder = 2)
                 ax.add_patch(P)
