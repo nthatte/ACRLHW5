@@ -22,16 +22,19 @@ def rotate_state(state, angle):
 class motion_primitive:
     turning_radius = 2.999999
     step_size = 0.1
-    def __init__(self, delta_state):
+    def __init__(self, delta_state, start_angle = 0):
         length = 3.0
         width = 2.0
         self.delta_state = delta_state
-        self.path,_ = dubins.path_sample((0,0,0), self.delta_state, 
+        self.start_angle = start_angle
+        self.cost = dubins.path_length((0,0,self.start_angle), delta_state, motion_primitive.turning_radius)
+        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, 
             motion_primitive.turning_radius, motion_primitive.step_size)
-        self.cost = dubins.path_length((0,0,0), delta_state, motion_primitive.turning_radius)
+        
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
+        
         self.bounding_poly = cascaded_union(polygons)
 
 
@@ -120,10 +123,10 @@ class dubins_astar:
     
     
     def cost_function(self, state, motion_primitive):
-        cost = motion_primitive.cost - 0.5*state[0]
-        if cost <= 0:
-            cost = 0.1
-        return cost# + belief cost
+        #cost = motion_primitive.cost - 0.5*state[0]
+        #if cost <= 0:
+        #    cost = 0.1
+        return motion_primitive.cost# + belief cost
 
     def state_equality(self, state1, state2):
         anglecheck = wrapToPi(state1[2]-state2[2])

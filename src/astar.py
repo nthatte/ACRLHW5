@@ -26,8 +26,9 @@ class AStar:
 
     def getChildren(self, cur_node):
         children = []
-        for primitive in self.motion_primitives:
-            if self.valid_edge(cur_node.state, primitive):
+        cur_angle = cur_node.state[2]
+        for primitive in self.motion_primitives[cur_angle]:
+            if self.valid_edge(cur_node.state, primitive,True):
                 new_state = primitive.get_end_state(cur_node.state) #cur_node.state + primitive.delta_state
                 g = cur_node.g + self.cost(cur_node.state, primitive)
                 h = self.heuristic(new_state, self.goal_state) 
@@ -56,7 +57,7 @@ class AStar:
             
             del self.PQ_hash[current.state.tostring()]
             if(self.state_is_equal(current.state, goal_state)):
-                return self.reconstruct_path(current)
+                return self.reconstruct_path(current), current.f
 
             self.V[current.state.tostring()] = current
 

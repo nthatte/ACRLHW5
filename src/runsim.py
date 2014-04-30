@@ -10,6 +10,7 @@ from astar_fcns import *
 import dubins
 from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, MultiPoint
 from shapely.ops import cascaded_union
+import computePrimitives
 
 #*****************************
 # Load map files and parameters
@@ -81,15 +82,18 @@ world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
 
 #Set up motion primitives
 # Define primitives relative to (0,0,0)
-delta_states = [np.array([ 1,  0, 0.0]),
-                np.array([ 3,  3, np.pi/2.0]),
-                np.array([ 3, -3, -np.pi/2.0])]
+#delta_states = [np.array([ 1,  0, 0.0]),
+#                np.array([ 5,  0, 0.0]),
+#                np.array([ 3,  3, np.pi/2.0]),
+#                np.array([ 3, -3, -np.pi/2.0])]
                 #np.array([-1,  0, 0.0])]
 
-print 'Generating motion primitives...'
-motion_primitives = []
-for i in range(0,len(delta_states)):
-    motion_primitives.append(motion_primitive(delta_states[i]))
+#print 'Generating motion primitives...'
+#motion_primitives = []
+#for i in range(0,len(delta_states)):
+#    motion_primitives.append(motion_primitive(delta_states[i]))
+
+motion_primitives = computePrimitives.computePrimitives()
 
 #set up dubins astar
 dub = dubins_astar(world_points)
@@ -118,7 +122,7 @@ for i in range(0,len(map_struct['map_samples'])):
     # observed_map is set to seed map, and the bridge information will be
     # updated once the car is within params.observation_radius
     state, observed_map, flags, goal = init_state(map_struct, params)    
-    pdb.set_trace()
+    #pdb.set_trace()
 
     # display the initial state
     if DISPLAY_ON:
@@ -149,7 +153,9 @@ for i in range(0,len(map_struct['map_samples'])):
             else:
                 astar_state = np.array([0,0,0]) # TODO
             astar_goal = np.array([goal[0],goal[1],0])
-            plan = astar.plan(astar_state, astar_goal)
+            plan, cost = astar.plan(astar_state, astar_goal)
+            print 'path cost:'
+            print cost
             path_states = motion_primitive.get_xytheta_paths(plan)
             dub.last_idx = 0
             print 'done'
@@ -162,7 +168,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            disp.plot(x, y, state, observed_map, path_states, dub.last_idx+10)
+            disp.plot(x, y, state, observed_map, path_states, dub.last_idx)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
