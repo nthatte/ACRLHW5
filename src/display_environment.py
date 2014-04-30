@@ -48,7 +48,7 @@ class display_environment:
             self.scale*numpy.array([state['y'], state['y'] 
             + self.length/2*numpy.sin(state['theta'])]),color = 'b')
 
-        self.l6, = plt.plot(self.scale*path[:,0],self.scale*path[:,1],color='k')
+        self.l6, = plt.plot(self.scale*path[:,0],self.scale*path[:,1],'k.',markersize=0.5)
 
         self.l7, = plt.plot(self.scale*path[carrot_idx,0],
             self.scale*path[carrot_idx,1],

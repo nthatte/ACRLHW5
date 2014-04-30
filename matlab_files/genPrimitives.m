@@ -5,24 +5,24 @@ addpath('./dubins/')
 global params;
 load_sim_params;
 
-params.goal = [5;10;pi/2];
-p = dubins([0;0;0]',params.goal', 3, .5);
-nsteps = ceil(1.5*sum(sum(diff(p(1:2,:),[],2).^2))/(params.r_radius*params.d_theta_nom));
+% params.goal = [5;10;pi/2];
+% p = dubins([0;0;0]',params.goal', 3, .5);
+% nsteps = ceil(1.5*sum(sum(diff(p(1:2,:),[],2).^2))/(params.r_radius*params.d_theta_nom));
+% 
+% params.numsteps = nsteps;
+% 
+% 
+% A = [eye(params.numsteps); -eye(params.numsteps)];
+% b = [ones(params.numsteps,1);ones(params.numsteps,1)];
+% u0 = zeros(params.numsteps,1);
+% % u = fmincon(@fn,u0,A,b);%,[],[],[],[],@nlcon);
+% options = optimset('MaxFunEvals',1e5,'TolCon',1e-6,'MaxIter',1e3);
+% u = fmincon(@fn,u0,A,b,[],[],[],[],@nlcon,options);
 
-params.numsteps = nsteps;
-
-
-A = [eye(params.numsteps); -eye(params.numsteps)];
-b = [ones(params.numsteps,1);ones(params.numsteps,1)];
-u0 = zeros(params.numsteps,1);
-% u = fmincon(@fn,u0,A,b);%,[],[],[],[],@nlcon);
-options = optimset('MaxFunEvals',1e5,'TolCon',1e-6,'MaxIter',1e3);
-u = fmincon(@fn,u0,A,b,[],[],[],[],@nlcon,options);
-
-u2 = u(u>=-1);
-
+% u2 = u(u>=-1);
+u2 = [ones(42,1);zeros(5,1);-1*ones(42,1)];
 x = [0;0;0]
-for ii=1:params.numsteps
+for ii=1:size(u2,1)
     x(:,ii+1) = simDyn(x(:,ii),u2(ii));
 end
 x(:,end)

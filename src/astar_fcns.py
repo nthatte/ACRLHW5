@@ -13,12 +13,12 @@ import cPickle as pickle
 def wrapToPi(angle):
     return (angle + np.pi) % (2.0 * np.pi ) - np.pi
 
-def rotate_state(state, angle):
-    rotMatrix = np.array([[np.cos(angle), -np.sin(angle)],
-                        [np.sin(angle),  np.cos(angle)]])
-    rot_state = state.copy()
-    rot_state[0:2] = rotMatrix.dot(state[0:2])    
-    return rot_state
+#def rotate_state(state, angle):
+#    rotMatrix = np.array([[np.cos(angle), -np.sin(angle)],
+#                        [np.sin(angle),  np.cos(angle)]])
+#    rot_state = state.copy()
+#    rot_state[0:2] = rotMatrix.dot(state[0:2])    
+#    return rot_state
 
 class motion_primitive:
     turning_radius = 2.999999
@@ -39,7 +39,9 @@ class motion_primitive:
         self.bounding_poly = cascaded_union(polygons)
 
     def get_end_state(self, start_state):
-        return start_state + rotate_state(self.delta_state,start_state[2])
+        end_state = start_state + self.delta_state
+        end_state[2] = wrapToPi(end_state[2])
+        return end_state #rotate_state(self.delta_state,start_state[2])
             
     @staticmethod
     def get_xytheta_paths(plan):
@@ -59,18 +61,18 @@ class dubins_astar:
         self.last_idx = 0
         self.last_err = 0.0
 
-        with open('map1value.pickle') as handle:
-            self.value_fcn = pickle.load(handle)
+        #with open('map1value.pickle') as handle:
+        #    self.value_fcn = pickle.load(handle)
 
         world_polys = [pt.buffer(0.5, 16, CAP_STYLE.square, JOIN_STYLE.bevel) for pt in world_points]
         self.world_polys = cascaded_union(world_polys)
 
     def valid_edge(self, state, primitive):
 
-        bounding_poly = affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0), use_radians = True)
+        bounding_poly = primitive.bounding_poly #affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0), use_radians = True)
         bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
 
-        if False:
+        if True:
             if bounding_poly.intersects(self.world_points):
                 color = 'r'
             else:
@@ -92,7 +94,8 @@ class dubins_astar:
             ax.set_ylim(0,50)
             fig.show()
             plt.pause(0.1)
-
+        #pdb.set_trace()
+        
         if bounding_poly.intersects(self.world_points):
 
             return False
@@ -101,11 +104,10 @@ class dubins_astar:
 
     def heuristic(self, state1, state2):
         state_diff = state1 - state2
-        return np.sqrt(state_diff[0]**2 + state_diff[1]**2)
+        return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
         #return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
-            
         curr_state = np.array([state['x'],state['y'],state['theta']])
         err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states[self.last_idx:]]
         dists = np.sqrt(np.sum(np.abs(err_vec)**2,axis=-1))

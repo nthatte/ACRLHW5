@@ -85,6 +85,8 @@ world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
 #                np.array([ 3,  3, np.pi/2.0]),
 #                np.array([ 3, -3, -np.pi/2.0])]
 
+motion_primitives = computePrimitives.computePrimitives()
+
 #set up dubins astar
 dub = dubins_astar(world_points)
 print 'done'
@@ -145,7 +147,7 @@ for i in range(0,len(map_struct['map_samples'])):
             plan, cost = astar.plan(astar_state, astar_goal)
             print 'path cost:'
             print cost
-            path_states = motion_primitive.get_xytheta_paths(plan)
+            path_states = plan #motion_primitive.get_xytheta_paths(plan)
             dub.last_idx = 0
             print 'done'
 
@@ -158,6 +160,7 @@ for i in range(0,len(map_struct['map_samples'])):
 
         if DISPLAY_ON:
             disp.plot(x, y, state, observed_map, path_states, dub.last_idx)
+        pdb.set_trace()
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
