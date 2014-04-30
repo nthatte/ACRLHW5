@@ -17,7 +17,7 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-filename = 'map_1.mat'
+filename = 'map_2.mat'
 map_struct_packed = sio.loadmat(filename, squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -160,7 +160,6 @@ for i in range(0,len(map_struct['map_samples'])):
 
         if DISPLAY_ON:
             disp.plot(x, y, state, observed_map, path_states, dub.last_idx)
-        pdb.set_trace()
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
