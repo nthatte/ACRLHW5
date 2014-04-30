@@ -23,16 +23,19 @@ def rotate_state(state, angle):
 class motion_primitive:
     turning_radius = 2.999999
     step_size = 0.1
-    def __init__(self, delta_state):
+    def __init__(self, delta_state, start_angle = 0):
         length = 3.0
         width = 2.0
         self.delta_state = delta_state
-        self.path,_ = dubins.path_sample((0,0,0), self.delta_state, 
+        self.start_angle = start_angle
+        self.cost = dubins.path_length((0,0,self.start_angle), delta_state, motion_primitive.turning_radius)
+        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, 
             motion_primitive.turning_radius, motion_primitive.step_size)
-        self.cost = dubins.path_length((0,0,0), delta_state, motion_primitive.turning_radius)
+        
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
+        
         self.bounding_poly = cascaded_union(polygons)
 
     def get_end_state(self, start_state):
@@ -97,9 +100,9 @@ class dubins_astar:
         
 
     def heuristic(self, state1, state2):
-        #state_diff = state1 - state2
-        #return np.sqrt(state_diff[0]**2 + state_diff[1]**2)
-        return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
+        state_diff = state1 - state2
+        return np.sqrt(state_diff[0]**2 + state_diff[1]**2)
+        #return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
             
@@ -125,12 +128,6 @@ class dubins_astar:
     
     
     def cost_function(self, state, motion_primitive):
-        ''' wtf vishnu
-        cost = motion_primitive.cost - 0.5*state[0]
-        if cost <= 0:
-            cost = 0.1
-        return cost# + belief cost
-        '''
         return motion_primitive.cost 
 
     def state_equality(self, state1, state2):

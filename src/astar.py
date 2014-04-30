@@ -23,7 +23,8 @@ class AStar:
 
     def getChildren(self, cur_node):
         children = []
-        for primitive in self.motion_primitives:
+        cur_angle = cur_node.state[2]
+        for primitive in self.motion_primitives[cur_angle]:
             if self.valid_edge(cur_node.state, primitive):
                 new_state = primitive.get_end_state(cur_node.state) #cur_node.state + primitive.delta_state
                 g = cur_node.g + self.cost(cur_node.state, primitive)
