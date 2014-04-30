@@ -24,7 +24,7 @@ class MDP:
 
         if plot:
             plt.ion()
-            fig = plt.figure(1)
+            fig = plt.figure(3)
 
         i = 0
         total_value_old = 0
@@ -62,19 +62,20 @@ class MDP:
 
                 if plot:
                     value_mat[s[0]-1, s[1]-1] = value[string_s]
-                    Sx.append(s[0])
-                    Sy.append(s[1])
+                    Sx.append(s[0]-0.5)
+                    Sy.append(s[1]-0.5)
                     Ax.append(policy[string_s][0])
                     Ay.append(policy[string_s][1])
 
-            if plot:
-                fig.clear()
-                plt.pcolor(value_mat.T)
-                plt.quiver(Sx, Sy, Ax, Ay)
-                plt.show()
-                plt.pause(0.00001)
             i += 1
-        return (value, policy)
+
+        if plot:
+            fig.clear()
+            plt.pcolor(value_mat.T)
+            plt.quiver(Sx, Sy, Ax, Ay)
+            plt.show()
+            plt.pause(0.00001)
+        return value
 
     def policy_evaluation(self, policy, init_value = None, num_iter = 100, plot = False, world_size = 0):
         if init_value:

@@ -54,16 +54,14 @@ class motion_primitive:
         return np.array(path)
 
 class dubins_astar:
-    def __init__(self, world_points, Kp = 1000.0, Kd = 200.0, look_ahead_dist = 0.9):
+    def __init__(self, world_points, value_fcn, Kp = 1000.0, Kd = 200.0, look_ahead_dist = 0.9):
         self.world_points = world_points
         self.Kp = Kp
         self.Kd = Kd
         self.look_ahead_dist = look_ahead_dist
         self.last_idx = 0
         self.last_err = 0.0
-
-        #with open('map1value.pickle') as handle:
-        #    self.value_fcn = pickle.load(handle)
+        self.value_fcn = value_fcn
 
         world_polys = [pt.buffer(0.5, 16, CAP_STYLE.square, JOIN_STYLE.bevel) for pt in world_points]
         self.world_polys = cascaded_union(world_polys)
@@ -110,9 +108,9 @@ class dubins_astar:
         
 
     def heuristic(self, state1, state2):
-        state_diff = state1 - state2
-        return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
-        #return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
+        #state_diff = state1 - state2
+        #return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
+        return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
         curr_state = np.array([state['x'],state['y'],state['theta']])

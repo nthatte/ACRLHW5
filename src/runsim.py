@@ -7,6 +7,8 @@ from motionModel import *
 import matplotlib.pyplot as plt
 from astar import AStar
 from astar_fcns import *
+from MDP import MDP
+from grid_mdp_fcns import GridWorldMDP
 import dubins
 from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, MultiPoint
 from shapely.ops import cascaded_union
@@ -17,8 +19,8 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-filename = 'map_2.mat'
-map_struct_packed = sio.loadmat(filename, squeeze_me = True)['map_struct'].item()
+map_name = 'map_1'
+map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
 map_struct['bridge_locations'] = map_struct_packed[1]
@@ -43,6 +45,10 @@ scale = 10.0
 DISPLAY_ON = 1 # 1 - turns display on, 0 - turns display off
 DISPLAY_TYPE = 'dots' # display as dots or blocks
 
+#load initial value function for this map
+with open(map_name +'value.pickle', 'rb') as handle:
+    value_fcn = pickle.load(handle)
+
 #*****************************
 # Training/Learning Phase
 #*****************************
@@ -66,7 +72,6 @@ DISPLAY_TYPE = 'dots' # display as dots or blocks
 # finishes in time for you to submit the assignment!
 #
 
-
 world_map = copy.deepcopy(map_struct['seed_map'])
 
 tuple_list = []
@@ -88,13 +93,14 @@ world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
 motion_primitives = computePrimitives.computePrimitives()
 
 #set up dubins astar
-dub = dubins_astar(world_points)
-print 'done'
-
-#Set up A Star
+dub = dubins_astar(world_points, value_fcn)
 astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
     dub.valid_edge, dub.state_equality)
 
+#set up grid world mdp
+grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'])
+mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
+value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 
 #*****************************
 # Run Sim
@@ -110,6 +116,7 @@ astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
 #
 # Loop through each map sample
 for i in range(0,len(map_struct['map_samples'])):
+
     # Initialize the starting car state and observed map
     # observed_map is set to seed map, and the bridge information will be
     # updated once the car is within params.observation_radius
@@ -123,7 +130,6 @@ for i in range(0,len(map_struct['map_samples'])):
     # loop until maxCount has been reached or goal is found
     loopCounter = 0;
     while (state['moveCount'] < params['max_moveCount']) and flags == 0:
-
         #---------------------------------------
         #
         #*****************************
@@ -168,6 +174,7 @@ for i in range(0,len(map_struct['map_samples'])):
         # pause
         
         loopCounter += 1
+
     del(disp)
     if flags == 1:
         print 'reached goal!'
