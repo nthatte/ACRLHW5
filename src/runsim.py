@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 import pdb
 from display_environment import *
 from initialize_state import *
@@ -67,24 +68,23 @@ DISPLAY_TYPE = 'dots' # display as dots or blocks
 #
 
 
-world_map = map_struct['seed_map']
+world_map = copy.deepcopy(map_struct['seed_map'])
 
 tuple_list = []
-for xx in range(0,world_map.shape[0]):
-    for yy in range(0,world_map.shape[1]):
-        if world_map[yy][xx] == 0.0:
+for xx in range(1,world_map.shape[0]+1):
+    for yy in range(1,world_map.shape[1]+1):
+        if world_map[yy-1][xx-1] == 0.0:
             #tuple_list.append((yy+0.5,xx+0.5))
             tuple_list.append((yy,xx))
 
-world_polys = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
-#world_polys = cascaded_union(polygons)
+world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
 
 #Set up motion primitives
 # Define primitives relative to (0,0,0)
 delta_states = [np.array([ 1,  0, 0.0]),
                 np.array([ 3,  3, np.pi/2.0]),
-                np.array([ 3, -3, -np.pi/2.0]),
-                np.array([-1,  0, 0.0])]
+                np.array([ 3, -3, -np.pi/2.0])]
+                #np.array([-1,  0, 0.0])]
 
 print 'Generating motion primitives...'
 motion_primitives = []
@@ -92,7 +92,7 @@ for i in range(0,len(delta_states)):
     motion_primitives.append(motion_primitive(delta_states[i]))
 
 #set up dubins astar
-dub = dubins_astar(world_polys)
+dub = dubins_astar(world_points)
 print 'done'
 
 #Set up A Star
@@ -114,15 +114,16 @@ astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
 #
 # Loop through each map sample
 for i in range(0,len(map_struct['map_samples'])):
-
     # Initialize the starting car state and observed map
     # observed_map is set to seed map, and the bridge information will be
     # updated once the car is within params.observation_radius
     state, observed_map, flags, goal = init_state(map_struct, params)    
+    pdb.set_trace()
 
     # display the initial state
     if DISPLAY_ON:
-        display_environment(x, y, state, map_struct, params, observed_map, scale, DISPLAY_TYPE = DISPLAY_TYPE)
+        disp = display_environment(x, y, state, map_struct, params, 
+            observed_map, scale, DISPLAY_TYPE = DISPLAY_TYPE)
 
     # loop until maxCount has been reached or goal is found
     loopCounter = 0;
@@ -161,7 +162,7 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map, map_struct['map_samples'][i], goal)
 
         if DISPLAY_ON:
-            display_environment(x, y, state, map_struct, params, observed_map, scale, path_states, dub.last_idx+10, DISPLAY_TYPE)
+            disp.plot(x, y, state, observed_map, path_states, dub.last_idx+10)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
@@ -170,3 +171,4 @@ for i in range(0,len(map_struct['map_samples'])):
         # pause
         
         loopCounter += 1
+    del(disp)

@@ -4,65 +4,90 @@ from scipy.misc import imresize
 import time
 import pdb
 
-def display_environment(x, y, state, map_struct, params, observed_map, scale, path=numpy.zeros((1,2)), carrot_idx=0, DISPLAY_TYPE = 'blocks'):
-    if plt.fignum_exists(1):
-        if DISPLAY_TYPE == 'blocks':
-            display_environment.environ.set_data(imresize(observed_map-0.5, scale, interp='nearest'))
-    
-        elif DISPLAY_TYPE == 'dots':
-            ind = numpy.where(observed_map == 0)
-            display_environment.environ.set_xdata(x[ind]*scale)
-            display_environment.environ.set_ydata(y[ind]*scale)
-           
-        display_environment.l3.set_xdata(scale*numpy.append(state['border'][0,:], state['border'][0,0]))
-        display_environment.l3.set_ydata(scale*numpy.append(state['border'][1,:], state['border'][1,0]))
+class display_environment:
+    def __init__(self, x, y, state, map_struct, params, observed_map, scale, 
+        path=numpy.zeros((1,2)), carrot_idx=0, DISPLAY_TYPE = 'blocks'):
 
-        display_environment.l4.set_xdata(scale*state['x'])
-        display_environment.l4.set_ydata(scale*state['y'])
-
-        display_environment.l5.set_xdata(scale*numpy.array([state['x'], state['x'] 
-                + params['length']/2*numpy.cos(state['theta'])]))
-        display_environment.l5.set_ydata(scale*numpy.array([state['y'], state['y'] 
-                + params['length']/2*numpy.sin(state['theta'])]))
-        display_environment.l6.set_xdata(scale*path[:,0])
-        display_environment.l6.set_ydata(scale*path[:,1])
-        display_environment.l7.set_xdata(scale*path[carrot_idx,0])
-        display_environment.l7.set_ydata(scale*path[carrot_idx,1])
-
-    else:
+        #set up figure
         plt.ion()
-        display_environment.fig = plt.figure(1)
-        display_environment.fig.show()
-        ax = display_environment.fig.add_subplot(111, aspect = 'equal')
+        self.fig = plt.figure(1)
+        self.fig.clear
+        self.fig.show()
+        ax = self.fig.add_subplot(111, aspect = 'equal')
 
-        if DISPLAY_TYPE == 'blocks':
-            display_environment.environ = plt.imshow(imresize(observed_map-0.5, scale, interp='nearest'))
+        self.DISPLAY_TYPE = DISPLAY_TYPE
+        self.scale = scale
 
-        elif DISPLAY_TYPE == 'dots':
+        self.start_state = map_struct['start']
+        self.goal_state  = map_struct['goal']
+        self.length = params['length']
+
+        if self.DISPLAY_TYPE == 'blocks':
+            self.environ = plt.imshow(imresize(observed_map, self.scale, interp='nearest'))
+
+        elif self.DISPLAY_TYPE == 'dots':
             ind = numpy.where(observed_map == 0)
-            display_environment.environ, = plt.plot(x[ind]*scale,y[ind]*scale,'k.',markersize=0.5*scale)
+            self.environ, = plt.plot(x[ind]*self.scale,y[ind]*self.scale,'k.',
+                markersize=0.5*self.scale)
 
-        display_environment.l1, = plt.plot(scale*map_struct['start'][0],
-            scale*map_struct['start'][1],'g.', markersize = 2*scale)
-        display_environment.l2, = plt.plot(scale*map_struct['goal'][0] ,
-            scale*map_struct['goal'][1] ,'r.', markersize = 2*scale)
+        self.l1, = plt.plot(self.scale*self.start_state[0],
+            self.scale*self.start_state[1],'g.', markersize = 2*self.scale)
+        self.l2, = plt.plot(self.scale*self.goal_state[0] ,
+            self.scale*self.goal_state[1] ,'r.', markersize = 2*self.scale)
 
-        display_environment.l3, = plt.plot(scale*numpy.append(state['border'][0,:], state['border'][0,0]),
-            scale*numpy.append(state['border'][1,:], state['border'][1,0]), color='r')
+        self.l3, = plt.plot(self.scale*numpy.append(state['border'][0,:], 
+            state['border'][0,0]),
+            self.scale*numpy.append(state['border'][1,:], 
+            state['border'][1,0]), color='r')
 
-        display_environment.l4, = plt.plot(scale*state['x'], 
-            scale*state['y'],'b.', markersize = 2*scale)
+        self.l4, = plt.plot(self.scale*state['x'], 
+            self.scale*state['y'],'b.', markersize = 2*self.scale)
 
-        display_environment.l5, = plt.plot(scale*numpy.array([state['x'], state['x'] 
-                + params['length']/2*numpy.cos(state['theta'])]),
-            scale*numpy.array([state['y'], state['y'] 
-                + params['length']/2*numpy.sin(state['theta'])]),color = 'b')
+        self.l5, = plt.plot(self.scale*numpy.array([state['x'], state['x'] 
+            + self.length/2*numpy.cos(state['theta'])]),
+            self.scale*numpy.array([state['y'], state['y'] 
+            + self.length/2*numpy.sin(state['theta'])]),color = 'b')
 
-        display_environment.l6, = plt.plot(scale*path[:,0],scale*path[:,1],color='k')
+        self.l6, = plt.plot(self.scale*path[:,0],self.scale*path[:,1],color='k')
 
-        display_environment.l7, = plt.plot(scale*path[carrot_idx,0],scale*path[carrot_idx,1],'.',color='#EB8921',markersize=2*scale)
+        self.l7, = plt.plot(self.scale*path[carrot_idx,0],
+            self.scale*path[carrot_idx,1],
+            '.',color='#EB8921',markersize=2*self.scale)
+            
+        plt.axis((0, 500, 0, 500))
+        plt.axis('off')
+        plt.draw()
+        plt.pause(0.0001)
+
+    def plot(self, x, y, state, observed_map, path=numpy.zeros((1,2)), carrot_idx=0):
+            if self.DISPLAY_TYPE == 'blocks':
+                self.environ.set_data(imresize(observed_map, self.scale, interp='nearest'))
         
-    plt.axis((0, 500, 0, 500))
-    plt.axis('off')
-    plt.draw()
-    plt.pause(0.0001)
+            elif self.DISPLAY_TYPE == 'dots':
+                ind = numpy.where(observed_map == 0)
+                self.environ.set_xdata(x[ind]*self.scale)
+                self.environ.set_ydata(y[ind]*self.scale)
+               
+            self.l3.set_xdata(self.scale*numpy.append(state['border'][0,:], state['border'][0,0]))
+            self.l3.set_ydata(self.scale*numpy.append(state['border'][1,:], state['border'][1,0]))
+
+            self.l4.set_xdata(self.scale*state['x'])
+            self.l4.set_ydata(self.scale*state['y'])
+
+            self.l5.set_xdata(self.scale*numpy.array([state['x'], state['x'] 
+                    + self.length/2*numpy.cos(state['theta'])]))
+            self.l5.set_ydata(self.scale*numpy.array([state['y'], state['y'] 
+                    + self.length/2*numpy.sin(state['theta'])]))
+            self.l6.set_xdata(self.scale*path[:,0])
+            self.l6.set_ydata(self.scale*path[:,1])
+            self.l7.set_xdata(self.scale*path[carrot_idx,0])
+            self.l7.set_ydata(self.scale*path[carrot_idx,1])
+
+            plt.axis((0, 500, 0, 500))
+            plt.axis('off')
+            plt.draw()
+            plt.pause(0.0001)
+
+    def __del__(self):
+        plt.close(self.fig)
+

@@ -7,6 +7,7 @@ from shapely.geometry import LineString
 from shapely.ops import cascaded_union
 from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, box
 from shapely import affinity
+from descartes import PolygonPatch
 
 def wrapToPi(angle):
     return (angle + np.pi) % (2.0 * np.pi ) - np.pi
@@ -22,17 +23,17 @@ class motion_primitive:
     turning_radius = 2.999999
     step_size = 0.1
     def __init__(self, delta_state):
-        length = 3.1
-        width = 2.1
+        length = 3.0
+        width = 2.0
         self.delta_state = delta_state
         self.path,_ = dubins.path_sample((0,0,0), self.delta_state, 
             motion_primitive.turning_radius, motion_primitive.step_size)
         self.cost = dubins.path_length((0,0,0), delta_state, motion_primitive.turning_radius)
-        self.path.append(tuple(self.delta_state.tolist()))
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
-        polygons = [affinity.rotate(a_box, theta, origin = 'centroid') for (a_box, theta) in box_angle_tuples]
+        polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
         self.bounding_poly = cascaded_union(polygons)
+
 
     def get_end_state(self, start_state):
         return start_state + rotate_state(self.delta_state,start_state[2])
@@ -47,22 +48,46 @@ class motion_primitive:
         return np.array(path)
 
 class dubins_astar:
-    def __init__(self, world_polys, Kp = 10000, look_ahead_dist = 0.1):
-        self.world_polys = world_polys
+    def __init__(self, world_points, Kp = 10000, look_ahead_dist = 0.1):
+        self.world_points = world_points
         self.Kp = Kp
         self.look_ahead_dist = look_ahead_dist
         self.last_idx = 0
 
-#    @profile
-    def valid_edge(self, state, primitive):
-        bounding_poly = affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0))
+        world_polys = [pt.buffer(0.5, 16, CAP_STYLE.square, JOIN_STYLE.bevel) for pt in world_points]
+        self.world_polys = cascaded_union(world_polys)
+
+    def valid_edge(self, state, primitive, plot_edge = False):
+
+        bounding_poly = affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0), use_radians = True)
         bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
 
-        if bounding_poly.intersects(self.world_polys):
+        if plot_edge:
+            if bounding_poly.intersects(self.world_points):
+                color = 'r'
+            else:
+                color = 'b'
+            pathx = [st[0] for st in primitive.path]
+            pathy = [st[1] for st in primitive.path]
+
+            fig = plt.figure(2)
+            fig.clear()
+            plt.ion()
+            ax = fig.add_subplot(111, aspect = 'equal')
+            for poly in self.world_polys:
+                P = PolygonPatch(poly, fc = 'k', zorder = 2)
+                ax.add_patch(P)
+            P = PolygonPatch(bounding_poly, fc = color, ec = '#999999', alpha = 1, zorder = 1)
+            polyPatch = ax.add_patch(P)
+            pathPlot, = ax.plot(pathx, pathy)
+            ax.set_xlim(0,50)
+            ax.set_ylim(0,25)
+            fig.show()
+            plt.pause(0.1)
+
+        if bounding_poly.intersects(self.world_points):
+
             return False
-        #for ob in self.world_polys:
-        #    if bounding_poly.intersects(ob):
-        #        return False        
         return True
         
     def heuristic(self, state1, state2):
@@ -86,8 +111,6 @@ class dubins_astar:
         
         if idx > len(dists):
             idx = len(dists)
-        
-
         
         err = wrapToPi(curr_state[2] - np.arctan2(err_vec[idx][1],err_vec[idx][0]))            
         action = -self.Kp*err

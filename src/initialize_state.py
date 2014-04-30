@@ -1,13 +1,16 @@
 import numpy
+import copy
+
 # Initialize observed map
 def init_state(map_struct, params):
-    observed_map = map_struct['seed_map']
+    copy_of_map_struct = copy.deepcopy(map_struct)
+    observed_map = copy_of_map_struct['seed_map']
 
-    goal = map_struct['goal'];
+    goal = copy_of_map_struct['goal'];
 
     state = {}
-    state['x'] = map_struct['start'][0];
-    state['y'] = map_struct['start'][1];
+    state['x'] = copy_of_map_struct['start'][0];
+    state['y'] = copy_of_map_struct['start'][1];
 
     state['theta'] = 0 # theta always defaults to 0
 

@@ -1,5 +1,6 @@
 import numpy
 from in_polygon import in_polygon
+import copy
 def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 #MOTIONMODEL - Transitions the robot from one state to the next using a
 #   differential drive motion model.
@@ -149,7 +150,7 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 
     # replace those indices in the observed map with values from the actual
     # map
-    observed_map[obs_ind] = actual_map[obs_ind];
+    observed_map[obs_ind] = copy.deepcopy(actual_map[obs_ind]);
 
 
     #*****************************
