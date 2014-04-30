@@ -17,7 +17,7 @@ class MDP:
         if value:
             policy = {}
         elif policy:
-            value = self.policy_evaluation(policy, num_iter = 100, plot = plot, world_size = world_size)
+            value = self.policy_evaluation(policy, num_iter = num_iter, plot = plot, world_size = world_size)
         else:
             value = dict([(s.tostring(),0) for s in self.states])
             policy = {} 

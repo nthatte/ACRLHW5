@@ -8,9 +8,10 @@ import cPickle as pickle
 #define states
 world_size = 50
 
-map_name = 'map_2'
+map_name = 'map_1'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
-map_array = map_struct_packed[3]
+#map_array = map_struct_packed[3]
+map_array = map_struct_packed[4][0]
 goal_state  = np.array(map_struct_packed[6].item())
 
 #get valid states (x,y) locations on the map 
@@ -28,10 +29,16 @@ actions = [np.array([ 1,  0]),
            np.array([ 1, -1]),
            np.array([-1,  1])]
 
+# initialized value function
 init_value = {}
+'''
 for s in states:
     init_value[s.tostring()] = np.linalg.norm(s - goal_state)
+'''
+with open(map_name +'value.pickle', 'rb') as handle:
+    init_value = pickle.load(handle)
         
+
 def valid_state(state):
     if map_array[state[1] -1, state[0] - 1] != 0.0:
        return True
@@ -108,8 +115,10 @@ V, pi = mdp.value_iteration(value = init_value)
 #V, pi = mdp.value_iteration(plot = True, world_size = world_size)
 #V, pi = mdp.value_iteration()
 
+'''
 with open(map_name +'value.pickle', 'wb') as handle:
     pickle.dump(V, handle)
+'''
 
 value_mat = np.zeros((world_size,world_size))
 Sx = []
