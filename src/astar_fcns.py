@@ -21,7 +21,7 @@ def wrapToPi(angle):
 #    return rot_state
 
 class motion_primitive:
-    turning_radius = 2.999999
+    turning_radius = 3.499999999 #2.999999
     step_size = 0.1
     theta_res = np.pi/4.0
     def __init__(self, delta_state, start_angle = 0, isbackward=False):
@@ -35,7 +35,7 @@ class motion_primitive:
         if self.isbackward:
             self.delta_state = (-np.cos(start_angle),-np.sin(start_angle),start_angle)
             self.path = [(-xx,-yy,tth) for (xx,yy,tth) in self.path]
-            self.cost *= 10
+            self.cost *= 2
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
@@ -55,7 +55,7 @@ class motion_primitive:
 
         polygons = [poly.buffer(0.05) for poly in polygons]
         try:
-            self.bounding_poly = cascaded_union(polygons).buffer(0.05).simplify(0.05)
+            self.bounding_poly = cascaded_union(polygons).buffer(0.1).simplify(0.05)
         except:
             self.bounding_poly = None
 
@@ -131,26 +131,34 @@ class dubins_astar:
     def heuristic(self, state1, state2):
         #state_diff = state1 - state2
         #return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
-        return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
+        return 1.5*self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
         curr_state = np.array([state['x'],state['y'],state['theta']])
-        err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states[self.last_idx:]]
+        err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states]
         dists = np.sqrt(np.sum(np.abs(err_vec)**2,axis=-1))
-        idx = np.argmin(dists)
+        #idx = np.argmin(dists)
         
-        while dists[idx] < self.look_ahead_dist:
-            idx += 1
+        if np.fabs(self.last_err) < (np.pi-np.pi/2):
+            self.look_ahead_dist = 0.9
+        else:
+            self.look_ahead_dist = 0.05
+            
+        while dists[self.last_idx] < self.look_ahead_dist:
+            self.last_idx += 1
         
-        if idx > len(dists):
-            idx = len(dists)
+        if self.last_idx > len(dists):
+            self.last_idx = len(dists)
         
-        self.last_idx += idx
+        #self.last_idx += idx
         
-        err = wrapToPi(curr_state[2] - np.arctan2(err_vec[idx][1],err_vec[idx][0]))
-        action = -self.Kp*err - self.Kd*(err-self.last_err)  + path_states[idx][2]
-        action = np.median([-1, 1, action])
-        
+        err = wrapToPi(curr_state[2] - np.arctan2(err_vec[self.last_idx][1],err_vec[self.last_idx][0]))
+        if np.fabs(err) < (np.pi-np.pi/2):
+            action = -self.Kp*err - self.Kd*(err-self.last_err)  + path_states[self.last_idx][2]
+            action = np.median([-1, 1, action])
+        else:
+            action = -2
+            
         self.last_err = err
         return action
     

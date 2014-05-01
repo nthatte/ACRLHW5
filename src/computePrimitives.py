@@ -4,13 +4,13 @@ from astar_fcns import motion_primitive
 import pdb
 
 def computePrimitives():
-    [x,y,th] = np.mgrid[-3:3:7j, -3:3:7j, -np.pi:(0.75*np.pi):8j]
+    [x,y,th] = np.mgrid[-3.5:3.5:7j, -3.5:3.5:7j, -np.pi:(0.75*np.pi):8j]
 
     x = x.flatten()
     y = y.flatten()
     th = th.flatten()
 
-    turning_radius = 2.999999
+    turning_radius = 3.4999999999 #2.999999
 
     print 'Generating motion primitives...'
     motion_primitives = {}

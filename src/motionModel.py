@@ -63,8 +63,8 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
         L = params['l_radius']*l_dTheta    # distance Left wheel traveled
             
         # Car moved straight backwards
-        state_out['x'] = state_in['x'] + (R+L)/2.0*nunmpy.cos(state_in['theta'])
-        state_out['y'] = state_in['y'] + (R+L)/2.0*nunmpy.sin(state_in['theta'])
+        state_out['x'] = state_in['x'] + (R+L)/2.0*numpy.cos(state_in['theta'])
+        state_out['y'] = state_in['y'] + (R+L)/2.0*numpy.sin(state_in['theta'])
        
         state_out['theta'] = state_in['theta'] + (R-L)/params['wb']
         state_out['moveCount'] = state_in['moveCount'] + 1
