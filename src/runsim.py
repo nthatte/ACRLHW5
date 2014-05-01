@@ -19,7 +19,7 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-map_name = 'map_2'
+map_name = 'map_1'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -29,6 +29,7 @@ map_struct['seed_map'] = map_struct_packed[3]
 map_struct['map_samples'] = map_struct_packed[4]
 map_struct['start'] = map_struct_packed[5].item()
 map_struct['goal'] = map_struct_packed[6].item()
+pdb.set_trace()
 
 #load params
 from load_sim_params import *

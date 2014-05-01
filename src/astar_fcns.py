@@ -163,8 +163,13 @@ class dubins_astar:
         return action
     
     
-    def cost_function(self, state, motion_primitive):
-        return motion_primitive.cost 
+    def cost_function(self, state, motion_primitive, offset, obstacles, obs_prob):
+        path = motion_primitive.path + offset
+        obs_cost = 0.0
+        for i in range(0:len(obstacles)):
+            if state_equality(path,obstacles[i]):
+                obst_cost += obs_prob[i]
+        return motion_primitive.cost + iota*obst_cost
 
     def state_equality(self, path, state2):
         if path is not None:

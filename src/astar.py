@@ -37,9 +37,9 @@ class AStar:
         for primitive in self.motion_primitives[cur_angle]:
             if self.valid_edge(cur_node.state, primitive, self.plot):
                 new_state = primitive.get_end_state(cur_node.state) #cur_node.state + primitive.delta_state
-                g = cur_node.g + self.cost(cur_node.state, primitive)
-                h = self.heuristic(new_state, self.goal_state) 
                 offset = np.array((cur_node.state[0], cur_node.state[1], 0.0))
+                g = cur_node.g + self.cost(cur_node.state, primitive, offset, obstacles, obs_prob)
+                h = self.heuristic(new_state, self.goal_state) 
                 child = node(new_state, cur_node, offset + primitive.path, g, h)
                 #print child.path[0]
                 #if cur_node.path != None:
