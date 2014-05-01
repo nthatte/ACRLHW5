@@ -31,7 +31,6 @@ class motion_primitive:
         self.start_angle = start_angle
         self.cost = dubins.path_length((0,0,self.start_angle), delta_state, motion_primitive.turning_radius)
         self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, motion_primitive.turning_radius, 0.1)
-
         self.isbackward = isbackward
         if self.isbackward:
             self.delta_state = (-np.cos(start_angle),-np.sin(start_angle),start_angle)
@@ -56,7 +55,7 @@ class motion_primitive:
 
         polygons = [poly.buffer(0.05) for poly in polygons]
         try:
-            self.bounding_poly = cascaded_union(polygons).simplify(0.05)
+            self.bounding_poly = cascaded_union(polygons).buffer(0.05).simplify(0.05)
         except:
             self.bounding_poly = None
 
@@ -89,14 +88,13 @@ class dubins_astar:
         world_polys = [pt.buffer(0.5, 16, CAP_STYLE.square, JOIN_STYLE.bevel) for pt in world_points]
         self.world_polys = cascaded_union(world_polys)
 
-    def valid_edge(self, state, primitive):
+    def valid_edge(self, state, primitive, plot = True):
 
         bounding_poly = primitive.bounding_poly #affinity.rotate(primitive.bounding_poly, state[2], origin = (0.0, 0.0), use_radians = True)
         bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
 
         #Drawing Primitive-TAKE OUT TODO
-        
-        if False:
+        if plot:
             xypoints = [(x+state[0],y+state[1]) for (x,y,z) in primitive.path]
             aaa = LineString(xypoints)
             p1 = PolygonPatch(aaa.buffer(0.1), fc="#999999", ec = '#999999',alpha=1,zorder=9)
@@ -160,6 +158,9 @@ class dubins_astar:
     def cost_function(self, state, motion_primitive):
         return motion_primitive.cost 
 
-    def state_equality(self, state1, state2):
-        anglecheck = wrapToPi(state1[2]-state2[2])
-        return np.array_equal(state1[0:2],state2[0:2]) and anglecheck<0.0001
+    def state_equality(self, path, state2):
+        if path is not None:
+            for state in path:
+                if np.linalg.norm(state[0:2]- state2[0:2]) < 1.0:
+                    return True
+        return False

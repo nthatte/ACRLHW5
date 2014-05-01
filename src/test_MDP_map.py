@@ -29,7 +29,6 @@ actions = [np.array([ 1,  0]),
            np.array([ 1, -1]),
            np.array([-1,  1])]
 
-pdb.set_trace()
 # initialized value function
 init_value = {}
 for s in states:
@@ -45,7 +44,6 @@ def valid_state(state):
        return True
     return False
 
-@profile
 def valid_actions_function(state):
     if np.array_equal(state,goal_state):
         return [np.array([ 0, 0])]
@@ -100,10 +98,8 @@ mdp = MDP(states, valid_actions_function, cost_function, converge_thr = 1, gamma
 #V = mdp.value_iteration(policy = init_policy, value = init_value)
 #V = mdp.value_iteration(value = init_value, plot = True, world_size = world_size)
 #V = mdp.value_iteration(value = init_value)
-V, pi = mdp.value_iteration(plot = True, world_size = world_size)
+V = mdp.value_iteration(plot = True, world_size = world_size)
 #V = mdp.value_iteration()
 
-'''
-with open(map_name +'value.pickle', 'wb') as handle:
+with open(map_name +'value_blocked.pickle', 'wb') as handle:
     pickle.dump(V, handle)
-'''

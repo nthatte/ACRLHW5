@@ -22,7 +22,7 @@ def computePrimitives():
         for delta_state in zip(x,y,th):
             #print delta_state
             length = dubins.path_length((0,0,start_angle), delta_state, turning_radius)
-            if length < np.pi*turning_radius and length > 0.001:
+            if length < np.pi*turning_radius and length > 0.005:
                 print length, start_angle, delta_state
                 mp = motion_primitive(np.array(delta_state),start_angle)
                 if mp.bounding_poly is not None:
