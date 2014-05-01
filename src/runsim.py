@@ -159,9 +159,10 @@ for i in range(0,len(map_struct['map_samples'])):
                     following_dist += np.linalg.norm(path_diff)
                 index = temp_idx
                 '''
-                ind_diff = np.array(indices) - dub.last_idx
-                index = indices(np.argmin(ind_diff))
-                astar_state = path[index,:]
+                ind_diff = np.abs(np.array(indices) - carrot_idx)
+                index = indices[np.argmin(ind_diff)]
+                astar_state = path_states[index,:]
+                invalidPath = False
 
             astar_goal = np.array([goal[0],goal[1],0])
             plan, indices, cost = astar.plan(astar_state, astar_goal)
@@ -170,6 +171,7 @@ for i in range(0,len(map_struct['map_samples'])):
             path_states = plan #motion_primitive.get_xytheta_paths(plan)
             dub.last_idx = 0
             print 'done'
+
 
         #compute action
         action = dub.control_policy(state, path_states)
@@ -194,9 +196,10 @@ for i in range(0,len(map_struct['map_samples'])):
             #set up grid world mdp
             grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
             mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
-            value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
+            #value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 
             #set up dubins astar
+            carrot_idx = dub.last_idx
             dub = dubins_astar(world_points, value_fcn)
             astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
                 dub.valid_edge, dub.state_equality)
