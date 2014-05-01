@@ -3,8 +3,9 @@ from pqdict import PQDict
 import time
 import pdb
 import numpy as np
-from astar_fcns import wrapToPi
+from astar_fcns import wrapToPi, motion_primitive
 import copy
+
 
 class node:
     def __init__(self, state, parent, path_from_parent, g, h):
@@ -29,7 +30,7 @@ class AStar:
 
     def getChildren(self, cur_node):
         children = []
-        cur_angle = np.around(wrapToPi(cur_node.state[2])/(np.pi/2.0))
+        cur_angle = np.around(wrapToPi(cur_node.state[2])/motion_primitive.theta_res)
         #print cur_node.state[2], wrapToPi(cur_node.state[2]), cur_angle
 
         for primitive in self.motion_primitives[cur_angle]:
