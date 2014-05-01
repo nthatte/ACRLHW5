@@ -92,15 +92,15 @@ world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
 
 motion_primitives = computePrimitives.computePrimitives()
 
-#set up dubins astar
-dub = dubins_astar(world_points, value_fcn)
-astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
-    dub.valid_edge, dub.state_equality)
-
 #set up grid world mdp
 grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'])
 mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
 value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
+
+#set up dubins astar
+dub = dubins_astar(world_points, value_fcn)
+astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
+    dub.valid_edge, dub.state_equality)
 
 #*****************************
 # Run Sim
@@ -120,12 +120,13 @@ for i in range(0,len(map_struct['map_samples'])):
     # Initialize the starting car state and observed map
     # observed_map is set to seed map, and the bridge information will be
     # updated once the car is within params.observation_radius
-    state, observed_map, flags, goal = init_state(map_struct, params)    
+    state, observed_map_new, flags, goal = init_state(map_struct, params)    
+    observed_map_old = None
 
     # display the initial state
     if DISPLAY_ON:
         disp = display_environment(x, y, state, map_struct, params, 
-            observed_map, scale, DISPLAY_TYPE = DISPLAY_TYPE)
+            observed_map_new, scale, DISPLAY_TYPE = DISPLAY_TYPE)
 
     # loop until maxCount has been reached or goal is found
     loopCounter = 0;
@@ -146,7 +147,8 @@ for i in range(0,len(map_struct['map_samples'])):
         if(loopCounter == 0): #or invalidPath(path, observed_map)):
             print 'Planning...'
             if loopCounter == 0:
-                astar_state = np.array([state['x'],state['y'],state['theta']])
+                #astar_state = np.array([state['x'],state['y'],state['theta']])
+                astar_state = np.array([map_struct['start'][0], map_struct['start'][1], 0])
             else:
                 astar_state = np.array([0,0,0]) # TODO
             astar_goal = np.array([goal[0],goal[1],0])
@@ -161,19 +163,43 @@ for i in range(0,len(map_struct['map_samples'])):
         action = dub.control_policy(state, path_states)
         
         # Execute the action and update observed_map
-        (state, observed_map, flags) = motionModel(params, state, action,
-            observed_map, map_struct['map_samples'][i], goal)
+        observed_map_old = copy.deepcopy(observed_map_new)
+        (state, observed_map_new, flags) = motionModel(params, state, action,
+            observed_map_new, map_struct['map_samples'][i], goal)
+    
+        if not numpy.array_equal(observed_map_old, observed_map_new):
+            print 'bridge detected! Replanning...'
 
+            world_map = observed_map_new
+            tuple_list = []
+            for xx in range(1,world_map.shape[0]+1):
+                for yy in range(1,world_map.shape[1]+1):
+                    if world_map[yy-1][xx-1] == 0.0:
+                        tuple_list.append((yy,xx))
+
+            world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
+
+            #set up grid world mdp
+            grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
+            mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
+            value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
+
+            #set up dubins astar
+            dub = dubins_astar(world_points, value_fcn)
+            astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
+                dub.valid_edge, dub.state_equality)
+            loopCounter = 0
+        else:
+            loopCounter += 1
+            
         if DISPLAY_ON:
-            disp.plot(x, y, state, observed_map, path_states, dub.last_idx)
+            disp.plot(x, y, state, observed_map_new, path_states, dub.last_idx)
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
         
         # pause if you'd like to pause at each step
         # pause
-        
-        loopCounter += 1
 
     del(disp)
     if flags == 1:

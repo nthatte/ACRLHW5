@@ -30,12 +30,13 @@ class MDP:
         total_value_old = 0
         total_value = float('inf')
         #run to convergence
+        print 'computing value...'
         while abs(total_value - total_value_old) > self.converge_thr:
             if i > num_iter:
                 break
             total_value_old = total_value
             total_value = 0
-            print i
+            print 'iteration ' + str(i)
 
             if plot:
                 value_mat = np.zeros((world_size,world_size))

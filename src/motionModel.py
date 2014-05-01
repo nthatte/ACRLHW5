@@ -152,7 +152,7 @@ def motionModel(params, state_in, action, observed_map, actual_map, goal_state):
 
     # replace those indices in the observed map with values from the actual
     # map
-    observed_map[obs_ind] = copy.deepcopy(actual_map[obs_ind]);
+    observed_map[obs_ind] = actual_map[obs_ind];
 
 
     #*****************************
