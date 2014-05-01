@@ -45,9 +45,6 @@ scale = 10.0
 DISPLAY_ON = 1 # 1 - turns display on, 0 - turns display off
 DISPLAY_TYPE = 'dots' # display as dots or blocks
 
-#load initial value function for this map
-with open(map_name +'value.pickle', 'rb') as handle:
-    value_fcn = pickle.load(handle)
 
 #*****************************
 # Training/Learning Phase
@@ -72,35 +69,6 @@ with open(map_name +'value.pickle', 'rb') as handle:
 # finishes in time for you to submit the assignment!
 #
 
-world_map = copy.deepcopy(map_struct['seed_map'])
-
-tuple_list = []
-for xx in range(1,world_map.shape[0]+1):
-    for yy in range(1,world_map.shape[1]+1):
-        if world_map[yy-1][xx-1] == 0.0:
-            #tuple_list.append((yy+0.5,xx+0.5))
-            tuple_list.append((yy,xx))
-
-world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
-
-#Set up motion primitives
-# Define primitives relative to (0,0,0)
-#delta_states = [np.array([ 1,  0, 0.0]),
-#                np.array([ 5,  0, 0.0]),
-#                np.array([ 3,  3, np.pi/2.0]),
-#                np.array([ 3, -3, -np.pi/2.0])]
-
-motion_primitives = computePrimitives.computePrimitives()
-
-#set up grid world mdp
-grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'])
-mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
-value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
-
-#set up dubins astar
-dub = dubins_astar(world_points, value_fcn)
-astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
-    dub.valid_edge, dub.state_equality)
 
 #*****************************
 # Run Sim
@@ -148,6 +116,41 @@ for i in range(0,len(map_struct['map_samples'])):
         if(loopCounter == 0 or invalidPath):
             print 'Planning...'
             if loopCounter == 0:
+
+                world_map = copy.deepcopy(map_struct['seed_map'])
+
+                tuple_list = []
+                for xx in range(1,world_map.shape[0]+1):
+                    for yy in range(1,world_map.shape[1]+1):
+                        if world_map[yy-1][xx-1] == 0.0:
+                            #tuple_list.append((yy+0.5,xx+0.5))
+                            tuple_list.append((yy,xx))
+
+                world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
+
+                #Set up motion primitives
+                # Define primitives relative to (0,0,0)
+                #delta_states = [np.array([ 1,  0, 0.0]),
+                #                np.array([ 5,  0, 0.0]),
+                #                np.array([ 3,  3, np.pi/2.0]),
+                #                np.array([ 3, -3, -np.pi/2.0])]
+
+                motion_primitives = computePrimitives.computePrimitives()
+
+                #load initial value function for this map
+                with open(map_name +'value.pickle', 'rb') as handle:
+                    value_fcn = pickle.load(handle)
+
+                #set up grid world mdp
+                grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'])
+                mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
+                value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
+
+                #set up dubins astar
+                dub = dubins_astar(world_points, value_fcn)
+                astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
+                    dub.valid_edge, dub.state_equality)
+
                 astar_state = np.array([state['x'],state['y'],state['theta']])
             else:
                 '''
