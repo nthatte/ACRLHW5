@@ -129,7 +129,8 @@ for i in range(0,len(map_struct['map_samples'])):
             observed_map_new, scale, DISPLAY_TYPE = DISPLAY_TYPE)
 
     # loop until maxCount has been reached or goal is found
-    loopCounter = 0;
+    loopCounter = 0
+    invalidPath = False
     while (state['moveCount'] < params['max_moveCount']) and flags == 0:
         #---------------------------------------
         #
@@ -144,15 +145,26 @@ for i in range(0,len(map_struct['map_samples'])):
         #we should run the AStar algorithm on the currently observed map using motion
         #primitives generated offline. If the current path is valid, we should just
         #execute the next step in it.
-        if(loopCounter == 0): #or invalidPath(path, observed_map)):
+        if(loopCounter == 0 or invalidPath):
             print 'Planning...'
             if loopCounter == 0:
-                #astar_state = np.array([state['x'],state['y'],state['theta']])
-                astar_state = np.array([map_struct['start'][0], map_struct['start'][1], 0])
+                astar_state = np.array([state['x'],state['y'],state['theta']])
             else:
-                astar_state = np.array([0,0,0]) # TODO
+                '''
+                following_dist = 0.0
+                temp_idx = dub.last_idx
+                while following_dist < dub.look_ahead_dist
+                    temp_idx -= 1
+                    path_diff = numpy.array([,])
+                    following_dist += np.linalg.norm(path_diff)
+                index = temp_idx
+                '''
+                ind_diff = np.array(indices) - dub.last_idx
+                index = indices(np.argmin(ind_diff))
+                astar_state = path[index,:]
+
             astar_goal = np.array([goal[0],goal[1],0])
-            plan, cost = astar.plan(astar_state, astar_goal)
+            plan, indices, cost = astar.plan(astar_state, astar_goal)
             print 'path cost:'
             print cost
             path_states = plan #motion_primitive.get_xytheta_paths(plan)
@@ -188,9 +200,9 @@ for i in range(0,len(map_struct['map_samples'])):
             dub = dubins_astar(world_points, value_fcn)
             astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
                 dub.valid_edge, dub.state_equality)
-            loopCounter = 0
-        else:
-            loopCounter += 1
+            invalidPath = True
+
+        loopCounter += 1
             
         if DISPLAY_ON:
             disp.plot(x, y, state, observed_map_new, path_states, dub.last_idx)
