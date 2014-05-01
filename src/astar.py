@@ -34,6 +34,12 @@ class AStar:
         #print cur_node.state[2], wrapToPi(cur_node.state[2]), cur_angle
 
         for primitive in self.motion_primitives[cur_angle]:
+            #if primitive == self.motion_primitives[cur_angle][-1] :
+                #if len(children)==0:
+                    #print "got no valid children, trying reverse"
+                #else:
+                    #continue
+                
             if self.valid_edge(cur_node.state, primitive):
                 new_state = primitive.get_end_state(cur_node.state) #cur_node.state + primitive.delta_state
                 g = cur_node.g + self.cost(cur_node.state, primitive)
@@ -91,7 +97,7 @@ class AStar:
             for child in children:
                 i += 1
                 if i%100 == 0:
-                    print 'iteration '+str(i)
+                    print 'A* iteration '+str(i)
                 
                 child_key = child.state.tostring()
                 if child_key in V:

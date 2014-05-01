@@ -19,7 +19,7 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-map_name = 'map_1'
+map_name = 'map_2'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -208,7 +208,6 @@ for i in range(0,len(map_struct['map_samples'])):
                 dub.valid_edge, dub.state_equality)
             invalidPath = True
 
-        loopCounter += 1
             
         if DISPLAY_ON:
             disp.plot(x, y, state, observed_map_new, path_states, dub.last_idx)
@@ -216,6 +215,10 @@ for i in range(0,len(map_struct['map_samples'])):
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']
         
+        if loopCounter == 0:
+            pdb.set_trace()
+
+        loopCounter += 1
         # pause if you'd like to pause at each step
         # pause
 

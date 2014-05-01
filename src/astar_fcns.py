@@ -30,10 +30,13 @@ class motion_primitive:
         self.delta_state = delta_state
         self.start_angle = start_angle
         self.cost = dubins.path_length((0,0,self.start_angle), delta_state, motion_primitive.turning_radius)
-        if isbackward:
-            self.cost *= 10
-        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, motion_primitive.turning_radius, 0.5)
+        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, motion_primitive.turning_radius, 0.1)
 
+        self.isbackward = isbackward
+        if self.isbackward:
+            self.delta_state = (-np.cos(start_angle),-np.sin(start_angle),start_angle)
+            self.path = [(-xx,-yy,tth) for (xx,yy,tth) in self.path]
+            self.cost *= 10
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
@@ -92,7 +95,7 @@ class dubins_astar:
         bounding_poly = affinity.translate(bounding_poly, state[0], state[1])
 
         #Drawing Primitive-TAKE OUT TODO
-
+        
         if False:
             xypoints = [(x+state[0],y+state[1]) for (x,y,z) in primitive.path]
             aaa = LineString(xypoints)
@@ -119,7 +122,7 @@ class dubins_astar:
             ax.set_ylim(0,50)
             fig.show()
             plt.pause(0.1)
-        #pdb.set_trace()
+            #pdb.set_trace()
         
         if bounding_poly.intersects(self.world_points):
 
@@ -130,7 +133,7 @@ class dubins_astar:
     def heuristic(self, state1, state2):
         #state_diff = state1 - state2
         #return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
-        return 1.5*self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
+        return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
         curr_state = np.array([state['x'],state['y'],state['theta']])
