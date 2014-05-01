@@ -9,8 +9,8 @@ class display_environment:
         path=numpy.zeros((1,2)), carrot_idx=0, DISPLAY_TYPE = 'blocks'):
 
         #set up figure
-        plt.ion()
         self.fig = plt.figure(1)
+        plt.ion()
         self.fig.clear
         self.fig.show()
         ax = self.fig.add_subplot(111, aspect = 'equal')
@@ -54,6 +54,7 @@ class display_environment:
             self.scale*path[carrot_idx,1],
             '.',color='#EB8921',markersize=2*self.scale)
             
+        plt.figure(1)
         plt.axis((0, 500, 0, 500))
         plt.axis('off')
         plt.draw()
@@ -83,6 +84,7 @@ class display_environment:
             self.l7.set_xdata(self.scale*path[carrot_idx,0])
             self.l7.set_ydata(self.scale*path[carrot_idx,1])
 
+            plt.figure(1)
             plt.axis((0, 500, 0, 500))
             plt.axis('off')
             plt.draw()

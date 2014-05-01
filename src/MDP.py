@@ -10,6 +10,7 @@ class MDP:
         self.cost = cost_function
         self.gamma = gamma
         self.converge_thr = converge_thr
+        self.fig = plt.figure(3)
 
     "Solve an MDP by value iteration"
     def value_iteration(self, policy = None, value = None, num_iter = 100, plot = False, world_size = 0):
@@ -24,7 +25,7 @@ class MDP:
 
         if plot:
             plt.ion()
-            fig = plt.figure(3)
+            self.fig = plt.figure(3)
 
         i = 0
         total_value_old = 0
@@ -71,9 +72,11 @@ class MDP:
             i += 1
 
         if plot:
-            fig.clear()
+            plt.figure(3)
+            plt.clf()
             plt.pcolor(value_mat.T)
             plt.quiver(Sx, Sy, Ax, Ay)
+            plt.axis([0, 50, 0, 50])
             plt.show()
             plt.pause(0.00001)
         return value
@@ -86,7 +89,7 @@ class MDP:
 
         if plot:
             plt.ion()
-            fig = plt.figure(1)
+            self.fig = plt.figure(3)
 
         i = 0
         total_value_old = 0
@@ -124,7 +127,7 @@ class MDP:
                     Ay.append(policy[string_s][1])
 
             if plot:
-                fig.clear()
+                self.fig.clear()
                 plt.pcolor(value_mat.T)
                 plt.quiver(Sx, Sy, Ax, Ay)
                 plt.show()
