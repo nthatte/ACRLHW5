@@ -20,13 +20,14 @@ class node:
         return cmp(self.f, other.f)
 
 class AStar:
-    def __init__(self, motion_primitives, cost_function, heuristic_function, valid_edge_function, state_equality_function):
+    def __init__(self, motion_primitives, cost_function, heuristic_function, valid_edge_function, state_equality_function, plot = False):
 
         self.motion_primitives = motion_primitives
         self.cost = cost_function
         self.heuristic = heuristic_function
         self.valid_edge = valid_edge_function
         self.state_is_equal = state_equality_function
+        self.plot = plot
 
     def getChildren(self, cur_node):
         children = []
@@ -34,7 +35,7 @@ class AStar:
         #print cur_node.state[2], wrapToPi(cur_node.state[2]), cur_angle
 
         for primitive in self.motion_primitives[cur_angle]:
-            if self.valid_edge(cur_node.state, primitive):
+            if self.valid_edge(cur_node.state, primitive, self.plot):
                 new_state = primitive.get_end_state(cur_node.state) #cur_node.state + primitive.delta_state
                 g = cur_node.g + self.cost(cur_node.state, primitive)
                 h = self.heuristic(new_state, self.goal_state) 
@@ -79,7 +80,7 @@ class AStar:
             current = PQ.popitem()[1]
             #print '\n'
             #print current.state[2]
-            if(self.state_is_equal(current.state, goal_state)):
+            if(self.state_is_equal(current.path, goal_state)):
                 path, indices = self.reconstruct_path(current)
                 return (path, indices, current.f)
 

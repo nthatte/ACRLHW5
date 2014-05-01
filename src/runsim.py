@@ -19,7 +19,7 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-map_name = 'map_1'
+map_name = 'map_2'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -149,7 +149,7 @@ for i in range(0,len(map_struct['map_samples'])):
                 #set up dubins astar
                 dub = dubins_astar(world_points, value_fcn)
                 astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
-                    dub.valid_edge, dub.state_equality)
+                    dub.valid_edge, dub.state_equality, plot = False)
 
                 astar_state = np.array([state['x'],state['y'],state['theta']])
             else:
@@ -184,7 +184,7 @@ for i in range(0,len(map_struct['map_samples'])):
         (state, observed_map_new, flags) = motionModel(params, state, action,
             observed_map_new, map_struct['map_samples'][i], goal)
     
-        if not numpy.array_equal(observed_map_old, observed_map_new):
+        if not numpy.array_equal(np.ceil(observed_map_old), np.ceil(observed_map_new)):
             print 'bridge detected! Replanning...'
 
             world_map = observed_map_new
@@ -195,6 +195,12 @@ for i in range(0,len(map_struct['map_samples'])):
                         tuple_list.append((yy,xx))
 
             world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
+
+            '''
+            #load initial value function for this map
+            with open(map_name +'value.pickle', 'rb') as handle:
+                value_fcn = pickle.load(handle)
+                '''
 
             #set up grid world mdp
             grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
