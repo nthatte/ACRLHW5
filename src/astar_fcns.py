@@ -23,27 +23,45 @@ def wrapToPi(angle):
 class motion_primitive:
     turning_radius = 2.999999
     step_size = 0.1
+    theta_res = np.pi/4.0
     def __init__(self, delta_state, start_angle = 0):
         length = 3.0
         width = 2.0
         self.delta_state = delta_state
         self.start_angle = start_angle
         self.cost = dubins.path_length((0,0,self.start_angle), delta_state, motion_primitive.turning_radius)
-        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, 
-            motion_primitive.turning_radius, motion_primitive.step_size)
+        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, motion_primitive.turning_radius, 0.5)
         
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
         
-        self.bounding_poly = cascaded_union(polygons)
+        if False:
+            fig = plt.figure(10)
+            fig.clear()
+            plt.ion()
+            ax = fig.add_subplot(111, aspect = 'equal')
+            for poly in polygons:
+                P = PolygonPatch(poly, fc = 'k', zorder = 2)
+                ax.add_patch(P)
+            ax.set_xlim(-5,5)
+            ax.set_ylim(-5,5)
+            fig.show()
+            
+
+        polygons = [poly.buffer(0.05) for poly in polygons]
+        try:
+            self.bounding_poly = cascaded_union(polygons).simplify(0.05)
+        except:
+            self.bounding_poly = None
+
 
     def get_end_state(self, start_state):
         offset = np.array((start_state[0], start_state[1], 0.0))
         end_state = offset + self.delta_state
         end_state[2] = wrapToPi(end_state[2])
         return end_state #rotate_state(self.delta_state,start_state[2])
-            
+    '''        
     @staticmethod
     def get_xytheta_paths(plan):
         path = []
@@ -52,7 +70,7 @@ class motion_primitive:
                 motion_primitive.turning_radius, motion_primitive.step_size)
             path += seg
         return np.array(path)
-
+    '''
 class dubins_astar:
     def __init__(self, world_points, value_fcn, Kp = 1000.0, Kd = 200.0, look_ahead_dist = 0.9):
         self.world_points = world_points

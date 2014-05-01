@@ -196,7 +196,7 @@ for i in range(0,len(map_struct['map_samples'])):
             #set up grid world mdp
             grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
             mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
-            #value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
+            value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 
             #set up dubins astar
             carrot_idx = dub.last_idx
