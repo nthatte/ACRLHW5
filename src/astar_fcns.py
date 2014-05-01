@@ -24,14 +24,16 @@ class motion_primitive:
     turning_radius = 2.999999
     step_size = 0.1
     theta_res = np.pi/4.0
-    def __init__(self, delta_state, start_angle = 0):
+    def __init__(self, delta_state, start_angle = 0, isbackward=False):
         length = 3.0
         width = 2.0
         self.delta_state = delta_state
         self.start_angle = start_angle
         self.cost = dubins.path_length((0,0,self.start_angle), delta_state, motion_primitive.turning_radius)
+        if isbackward:
+            self.cost *= 10
         self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, motion_primitive.turning_radius, 0.5)
-        
+
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
@@ -128,7 +130,7 @@ class dubins_astar:
     def heuristic(self, state1, state2):
         #state_diff = state1 - state2
         #return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
-        return self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
+        return 1.5*self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
         curr_state = np.array([state['x'],state['y'],state['theta']])

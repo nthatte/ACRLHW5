@@ -29,6 +29,17 @@ def computePrimitives():
                     mps.append(mp)
                 else:
                     print "failed check"
+                    
+        delta_state = (np.cos(start_angle),np.sin(start_angle),start_angle)
+        mp = motion_primitive(np.array(delta_state),start_angle, True)
+        #pdb.set_trace()
+        mp.path = [(-xx,-yy,tth) for (xx,yy,tth) in mp.path]
+        length = dubins.path_length((0,0,start_angle), delta_state, turning_radius)
+        print length, start_angle, delta_state
+        print mp.path
+
+        mps.append(mp)
+                    
         print len(mps)
         motion_primitives[np.around(start_angle/motion_primitive.theta_res)] = mps
     '''    
