@@ -21,24 +21,19 @@ def computePrimitives():
             #print delta_state
             length = dubins.path_length((0,0,start_angle), delta_state, motion_primitive.turning_radius)
             if length < np.pi*motion_primitive.turning_radius and length > 0.005:
-                print length, start_angle, delta_state
                 mp = motion_primitive(np.array(delta_state),start_angle)
+                print mp.cost, mp.start_angle, mp.delta_state
                 if mp.bounding_poly is not None:
                     mps.append(mp)
                 else:
                     print "failed check"
                     
         # Add reverse to each layer
-        delta_state = (np.cos(start_angle),np.sin(start_angle),start_angle)
+        delta_state = (0.75*np.cos(start_angle),0.75*np.sin(start_angle),start_angle)
         mp = motion_primitive(np.array(delta_state),start_angle, True)
         print mp.cost, mp.start_angle, mp.delta_state
         print mp.path
-        if mp.bounding_poly is not None:
-            mps.append(mp)
-        else:
-            raise Exception('No bounding poly for backwards motion')
-
-        #pdb.set_trace()
+        mps.append(mp)
         
         print len(mps)
         motion_primitives[np.around(start_angle/motion_primitive.theta_res)] = mps

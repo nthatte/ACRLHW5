@@ -55,11 +55,11 @@ class motion_primitive:
             fig.show()
             
 
-        polygons = [poly.buffer(0.05) for poly in polygons]
+        polygons = [poly.buffer(0.1) for poly in polygons]
         try:
-            self.bounding_poly = cascaded_union(polygons).buffer(0.15).simplify(0.05)
+            self.bounding_poly = cascaded_union(polygons).simplify(0.05)
         except:
-            self.bounding_poly = None
+            raise Exception('No bounding poly for primitive')
 
 
     def get_end_state(self, start_state):

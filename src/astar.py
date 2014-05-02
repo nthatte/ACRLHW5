@@ -30,7 +30,6 @@ class AStar:
         self.state_is_equal = state_equality_function
         self.plot = plot
 
-    @profile
     def getChildren(self, cur_node):
         children = []
         cur_angle = np.around(wrapToPi(cur_node.state[2])/motion_primitive.theta_res)
