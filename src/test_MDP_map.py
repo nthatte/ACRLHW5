@@ -8,10 +8,11 @@ import cPickle as pickle
 #define states
 world_size = 50
 
-map_name = 'map_1'
+map_name = 'map_2'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_array = map_struct_packed[3]
 #map_array = map_struct_packed[4][0]
+start_state = np.array(map_struct_packed[5].item())
 goal_state  = np.array(map_struct_packed[6].item())
 bridge_locations = map_struct_packed[1]
 bridge_probabilities = map_struct_packed[2]
@@ -88,26 +89,44 @@ def valid_actions_function(state):
                             valid_actions.append(a)
         return valid_actions
                 
+radius = 3.0
+replan_cost = 30
+if len(bridge_locations.shape) == 1:
+    bridge_probabilities = [bridge_probabilities]
 
-replan_cost =  20
+if len(bridge_locations.shape) > 1:
+    replan_costs = [np.linalg.norm(start_state - bridge_location,  ord = np.inf) for bridge_location in bridge_locations.T]
+else:
+    replan_costs = [np.linalg.norm(start_state - bridge_locations, ord = np.inf)]
+
 def cost_function(state, action):
     action_cost = np.linalg.norm(action)
     #for obs in bridge_locations:
-    if np.linalg.norm(state - bridge_locations, ord = np.inf) <= 5.0:
-        prob = bridge_probabilities
+    if len(bridge_locations.shape) > 1:
+        dists_to_bridge = bridge_locations.T-state
+        dists_to_bridge = np.sqrt(dists_to_bridge[:,0]**2 + dists_to_bridge[:,1]**2)
     else:
-        prob = 1.0
-    return action_cost + (1.0-prob)*replan_cost
+        dists_to_bridge = state - bridge_locations
+        dists_to_bridge = [np.sqrt(dists_to_bridge[0]**2 + dists_to_bridge[1]**2)]
+
+    prob_open = 1.0
+    replan_cost = 0.0
+    for (i, dist_to_bridge) in enumerate(dists_to_bridge):
+        if dist_to_bridge <= radius:
+            prob_open *= bridge_probabilities[i]
+            if replan_costs[i] > replan_cost:
+                replan_cost = replan_costs[i]
+        i += 1
+    return action_cost + (1.0-prob_open)*replan_cost
 
 mdp = MDP(states, valid_actions_function, cost_function, converge_thr = 1, gamma = 1)
 #V = mdp.value_iteration(policy = init_policy, plot = True, world_size = world_size)
 #V = mdp.value_iteration(policy = init_policy, value = init_value, plot = True, world_size = world_size)
 #V = mdp.value_iteration(policy = init_policy)
 #V = mdp.value_iteration(policy = init_policy, value = init_value)
-#V = mdp.value_iteration(value = init_value, plot = True, world_size = world_size)
+V = mdp.value_iteration(value = init_value, plot = True, world_size = world_size)
 #V = mdp.value_iteration(value = init_value)
-V = mdp.value_iteration(plot = True, world_size = world_size)
-pdb.set_trace()
+#V = mdp.value_iteration(plot = True, world_size = world_size)
 #V = mdp.value_iteration()
 
 #with open(map_name +'value_blocked.pickle', 'wb') as handle:

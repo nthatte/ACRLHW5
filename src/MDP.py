@@ -24,7 +24,6 @@ class MDP:
             policy = {} 
 
         if plot:
-            plt.ion()
             self.fig = plt.figure(3)
 
         i = 0
