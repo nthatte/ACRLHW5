@@ -40,7 +40,7 @@ class motion_primitive:
             self.delta_state[:2] = -self.delta_state[:2] #(-0.25*np.cos(start_angle),-0.25*np.sin(start_angle),start_angle)
             self.path[:,0:2] = -1*self.path[:,0:2]
             #self.path = [(-xx,-yy,tth) for (xx,yy,tth) in self.path]
-            #self.cost *= 2
+            self.cost *= 2
 
         box_angle_tuples = [(box(x - length/2, y - width/2, x + length/2, y + width/2), theta) for (x,y,theta) in self.path]
         polygons = [affinity.rotate(a_box, theta, origin = 'centroid', use_radians = True) for (a_box, theta) in box_angle_tuples]
@@ -148,10 +148,10 @@ class dubins_astar:
         dists = np.sqrt(np.sum(np.abs(err_vec)**2,axis=-1))
         #idx = np.argmin(dists)
         
-        #if not seg.isbackward: #np.fabs(self.last_err) < (np.pi-np.pi/2):
-            #self.look_ahead_dist = 0.5
-        #else:
-            #self.look_ahead_dist = 0.5
+        if not seg.isbackward: #np.fabs(self.last_err) < (np.pi-np.pi/2):
+            self.look_ahead_dist = 0.9
+        else:
+            self.look_ahead_dist = 0.5
             
         heading_mode = False
         

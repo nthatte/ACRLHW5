@@ -29,7 +29,7 @@ def computePrimitives():
                 print "failed check"
                 
     # Add reverse to each layer
-    back_lengths = np.arange(0.5,3.5,0.5)
+    back_lengths = np.arange(1.0,3.5,0.5)
     for back_len in back_lengths:
         delta_state = (back_len*np.cos(start_angle),back_len*np.sin(start_angle),start_angle)
         mp = motion_primitive(np.array(delta_state),start_angle, True)
