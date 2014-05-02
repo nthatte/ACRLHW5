@@ -64,18 +64,19 @@ class AStar:
 
     def reconstruct_path(self,cur_node):
         print 'Reconstructing path:'
-        path = cur_node.path[::-1]
-        indices = [0]
+        path = [cur_node]#.path[::-1]
+        #indices = [0]
         while (cur_node.parent):
             #print cur_node.state
-            if cur_node.parent.path is not None:
-                path = np.append(path, cur_node.parent.path[::-1], axis=0)
-                cur_length = indices[-1]
-                indices.append(len(cur_node.parent.path) + cur_length)
+            #if cur_node.parent.path is not None:
+                #path = np.append(path, cur_node.parent.path[::-1], axis=0)
+                #cur_length = indices[-1]
+                #indices.append(len(cur_node.parent.path) + cur_length)
             cur_node = cur_node.parent
-        total_length = len(path)
-        indices = [total_length - i for i in indices]
-        return path[::-1], indices
+            path.append(cur_node)
+        #total_length = len(path)
+        #indices = [total_length - i for i in indices]
+        return path[::-1] #, indices
 
     def plan(self, start_state, goal_state):
         #PQ = pqdict()
@@ -94,8 +95,8 @@ class AStar:
             #print '\n'
             #print current.state[2]
             if(self.state_is_equal(current.path, goal_state)):
-                path, indices = self.reconstruct_path(current)
-                return (path, indices, current.f)
+                path = self.reconstruct_path(current)
+                return (path, current.f)
 
             V[current.state.tostring()] = copy.deepcopy(current)
 

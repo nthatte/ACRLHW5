@@ -162,22 +162,23 @@ for i in range(0,len(map_struct['map_samples'])):
                     following_dist += np.linalg.norm(path_diff)
                 index = temp_idx
                 '''
-                ind_diff = np.abs(np.array(indices) - carrot_idx)
-                index = indices[np.argmin(ind_diff)]
-                astar_state = path_states[index,:]
+                #ind_diff = np.abs(np.array(indices) - carrot_idx)
+                #index = indices[np.argmin(ind_diff)]
+                astar_state = np.array([state['x'],state['y'],state['theta']]) #path_states[index,:]
                 invalidPath = False
 
             astar_goal = np.array([goal[0],goal[1],0])
-            plan, indices, cost = astar.plan(astar_state, astar_goal)
+            plan, cost = astar.plan(astar_state, astar_goal)
             print 'path cost:'
             print cost
-            path_states = plan #motion_primitive.get_xytheta_paths(plan)
+            path_states = motion_primitive.get_xytheta_paths(plan)
+            dub.last_seg = 1 # not 0 since 0 is the root and has not path segment
             dub.last_idx = 0
             print 'done'
 
 
         #compute action
-        action = dub.control_policy(state, path_states)
+        action = dub.control_policy(state, plan)
         
         # Execute the action and update observed_map
         observed_map_old = copy.deepcopy(observed_map_new)
@@ -208,7 +209,7 @@ for i in range(0,len(map_struct['map_samples'])):
             value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 
             #set up dubins astar
-            carrot_idx = dub.last_idx
+            #carrot_idx = dub.last_idx
             dub = dubins_astar(world_points, value_fcn)
             astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
                 dub.valid_edge, dub.state_equality, plot = False)
@@ -216,7 +217,7 @@ for i in range(0,len(map_struct['map_samples'])):
 
             
         if DISPLAY_ON:
-            disp.plot(x, y, state, observed_map_new, path_states, dub.last_idx)
+            disp.plot(x, y, state, observed_map_new, path_states, plan[dub.last_seg].path[dub.last_idx][0:2])
 
         # display some output
         print state['x'], state['y'], state['theta'], state['moveCount']

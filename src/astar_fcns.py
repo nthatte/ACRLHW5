@@ -73,16 +73,18 @@ class motion_primitive:
         end_state[2] = wrapToPi(end_state[2])
         #pdb.set_trace()
         return end_state
-    '''        
+    
     @staticmethod
     def get_xytheta_paths(plan):
-        path = []
-        for i in range(len(plan)-1,0,-1):
-            seg, _ = dubins.path_sample(plan[i], plan[i-1], 
-                motion_primitive.turning_radius, motion_primitive.step_size)
-            path += seg
-        return np.array(path)
-    '''
+        path = None
+        for seg in plan:
+            if seg.path is not None:
+                if path is None:
+                    path = seg.path
+                else:
+                    path = np.append(path,seg.path,axis=0)                
+        return path
+    
 class dubins_astar:
     def __init__(self, world_points, value_fcn, Kp = 1000.0, Kd = 200.0, look_ahead_dist = 0.9):
         self.world_points = world_points
@@ -90,6 +92,7 @@ class dubins_astar:
         self.Kd = Kd
         self.look_ahead_dist = look_ahead_dist
         self.last_idx = 0
+        self.last_seg = 1 # not 0 since 0 is the root and has not path segment
         self.last_err = 0.0
         self.value_fcn = value_fcn
 
@@ -134,31 +137,66 @@ class dubins_astar:
         #return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
         return 1.5*self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
-    def control_policy(self, state, path_states):
+    def control_policy(self, state, plan):
         curr_state = np.array([state['x'],state['y'],state['theta']])
+        #pdb.set_trace()
+        
+        seg = plan[self.last_seg]
+        path_states = seg.path        
         err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states]
         dists = np.sqrt(np.sum(np.abs(err_vec)**2,axis=-1))
+        print dists
         #idx = np.argmin(dists)
         
-        if np.fabs(self.last_err) < (np.pi-np.pi/2):
+        if not seg.isbackward: #np.fabs(self.last_err) < (np.pi-np.pi/2):
             self.look_ahead_dist = 0.5
         else:
-            self.look_ahead_dist = 0.05
+            self.look_ahead_dist = 0.5
             
-        while dists[self.last_idx] < self.look_ahead_dist:
-            self.last_idx += 1
+        heading_mode = False
         
-        if self.last_idx > len(dists):
-            self.last_idx = len(dists)
+        while (dists[self.last_idx] < self.look_ahead_dist) or (self.last_idx+1 < len(dists) and dists[self.last_idx] > dists[self.last_idx+1]):
+            self.last_idx += 1
+            # If at end of segment, go to next
+            if self.last_idx >= len(dists):
+
+                # TODO - check whether dists[-1] is decreasing to detect leaving last point
+                # If not at the end of the segment, keep going
+                if dists[-1] > 0.1: #
+                    self.last_idx = len(dists)-1
+                    heading_mode = not seg.isbackward
+                    break
+                    
+                # If at last segment, stay at the end
+                if self.last_seg >= len(plan):
+                    self.last_seg = len(plan)
+                    self.last_idx = len(seg)
+                else:
+                    # Go to next segment and reset index
+                    self.last_seg += 1
+                    self.last_idx = 0
+                
+                # Recompute error vector
+                seg = plan[self.last_seg]
+                path_states = seg.path
+                err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states]
+                break
+
         
         #self.last_idx += idx
-        
-        err = wrapToPi(curr_state[2] - np.arctan2(err_vec[self.last_idx][1],err_vec[self.last_idx][0]))
-        if np.fabs(err) < (np.pi-np.pi/2):
+        if heading_mode:
+            err = wrapToPi(curr_state[2] - path_states[self.last_idx][2])
+            action = -self.Kp*10*err
+            action = np.median([-1, 1, action])
+            print 'Pure heading control mode'
+        elif seg.isbackward:
+            err = 0
+            action = -2
+        else:
+            err = wrapToPi(curr_state[2] - np.arctan2(err_vec[self.last_idx][1],err_vec[self.last_idx][0]))
             action = -self.Kp*err - self.Kd*(err-self.last_err)  + path_states[self.last_idx][2]
             action = np.median([-1, 1, action])
-        else:
-            action = -2
+            
             
         self.last_err = err
         return action

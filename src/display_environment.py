@@ -6,7 +6,7 @@ import pdb
 
 class display_environment:
     def __init__(self, x, y, state, map_struct, params, observed_map, scale, 
-        path=numpy.zeros((1,2)), carrot_idx=0, DISPLAY_TYPE = 'blocks'):
+        path=numpy.zeros((1,2)), carrot_pos=(0,0), DISPLAY_TYPE = 'blocks'):
 
         #set up figure
         self.fig = plt.figure(1)
@@ -49,9 +49,9 @@ class display_environment:
             + self.length/2*numpy.sin(state['theta'])]),color = 'b')
 
         self.l6, = plt.plot(self.scale*path[:,0],self.scale*path[:,1],color='k')
-
-        self.l7, = plt.plot(self.scale*path[carrot_idx,0],
-            self.scale*path[carrot_idx,1],
+        
+        self.l7, = plt.plot(self.scale*carrot_pos[0],
+            self.scale*carrot_pos[1],
             '.',color='#EB8921',markersize=2*self.scale)
             
         plt.figure(1)
@@ -60,7 +60,7 @@ class display_environment:
         plt.draw()
         plt.pause(0.0001)
 
-    def plot(self, x, y, state, observed_map, path=numpy.zeros((1,2)), carrot_idx=0):
+    def plot(self, x, y, state, observed_map, path=numpy.zeros((1,2)), carrot_pos=(0,0)):
             if self.DISPLAY_TYPE == 'blocks':
                 self.environ.set_data(imresize(observed_map, self.scale, interp='nearest'))
         
@@ -81,8 +81,8 @@ class display_environment:
                     + self.length/2*numpy.sin(state['theta'])]))
             self.l6.set_xdata(self.scale*path[:,0])
             self.l6.set_ydata(self.scale*path[:,1])
-            self.l7.set_xdata(self.scale*path[carrot_idx,0])
-            self.l7.set_ydata(self.scale*path[carrot_idx,1])
+            self.l7.set_xdata(self.scale*carrot_pos[0])
+            self.l7.set_ydata(self.scale*carrot_pos[1])
 
             plt.figure(1)
             plt.axis((0, 500, 0, 500))
