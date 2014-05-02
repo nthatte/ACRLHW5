@@ -1,0 +1,160 @@
+\documentclass{article}
+\usepackage{calc, amsmath, amssymb, amsfonts, amsthm, mathtools, empheq}
+\usepackage{tabularx,colortbl}
+\usepackage{fancyhdr, graphicx}
+%\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{framed}
+\usepackage{enumerate}
+\usepackage{subfigure}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage[numbers]{natbib}
+\usepackage[]{algorithm2e}
+
+\usepackage{listings}
+\usepackage{color}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+ language=Matlab,                % the language of the code
+ basicstyle=\footnotesize,           % the size of the fonts that are used for the code
+ showstringspaces=false,
+ tabsize=2,                      % sets default tabsize to 2 spaces                
+ keywordstyle=\color{blue},          % keyword style
+ commentstyle=\color{dkgreen},       % comment style
+ stringstyle=\color{mauve},         % string literal style
+}
+
+
+% Homework Data:
+% HW Title:
+\newcommand{\hwkTitle}{Homework 5: Uncertainty Planning}
+% Homework Date:
+\newcommand{\hwkDate}{03/07/2014}
+% My name!
+\newcommand{\hwkAuthor}{Vishnu Desaraju, Nitish Thatte, Bhaskar Vaidya}
+% Class name:
+\newcommand{\hwkClass}{16-899C: ARCL}
+
+% Margins:
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+% Header & Footer
+\pagestyle{fancy}
+%\lhead{}
+%\chead{}
+%\rhead{\hwkDate}
+\lfoot{\hwkDate}
+\cfoot{}
+%\cfoot{\hwkClass\ - \hwkTitle}
+\rfoot{Page\ \thepage}
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+%%%%%%
+% Extra (Awesome) Functions:
+%%%%%%
+
+% Boxes & Centers solution. 
+% Usage: \soln{This is the solution.}
+\newcommand{\soln}[1]{ \begin{center} \fbox{#1} \end{center}}
+
+% Inserts a number in scientific notation. 
+% Usage: <mantissa>\e{<exponent>}
+\providecommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+
+% Adds a degree symbol. Usage: <temperature>\degree C
+\newcommand{\degree}{\(^\circ\)}
+
+% Adds a partial differential fraction. Usage: \dd{V}{T} % For dV/dT
+\newcommand{\dd}[2]{\ensuremath{\frac{\partial #1}{\partial #2}}}
+% Adds norm. Usage\norm{stuff}
+\newcommand{\norm}[1]{\lVert#1\rVert}
+\newcommand{\ip}[2]{\left\langle #1,\ #2\right\rangle}
+\newcommand{\paren}[1]{\left( #1 \right)}
+\newcommand{\abs}[1]{\left| #1 \right|}
+
+\def\ci{\perp\!\!\!\perp}
+
+\newcommand{\bldsym}[1]{\boldsymbol{#1}}
+
+
+% for argmin
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+
+\newcommand{\problem}[1]{\hfill \vspace{2ex} \\ \textbf{\large{#1}} \vspace{2ex} \newline}
+\newcommand{\question}[1]{\hfill \\ \textbf{#1} \hfill \\ \indent}
+
+\newlength\dlf
+\newcommand{\alignedbox}[2]{
+  % #1 = before alignment
+  % #2 = after alignment
+  &
+  \begingroup
+  \settowidth\dlf{$\displaystyle #1$}
+  \addtolength\dlf{\fboxsep+\fboxrule}
+  \hspace{-\dlf}
+  \boxed{#1 #2}
+  \endgroup
+}
+\newcommand{\insertTitle}{\begin{center}\LARGE{\hwkClass\ - \hwkTitle} \\ \large{\hwkAuthor} \end{center}}
+
+\title{\hwkTitle\ -\ \hwkClass}
+\author{\hwkAuthor}
+\date{Sep. 17, 2013}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\insertTitle
+\vspace*{3ex}
+
+\section{Planning Algorithm: A-Star}
+
+We decided to use the A-Star search algorithm to solve the planning problem. Our nodes were $(x, y, \theta)$ tuples, and we utilized a small set of grid-based motion primitives as our edges. We hand-tuned the number and curvature of the motion-primitives to obtain a good tradeoff between planning time and ability to solve complex geometries.
+
+\subsection{Motion Primitives and Cost}
+
+Our motion primitives were designed as short Dubin's curves, designed to be less than 9 meters in length. While the model is not actually a Dubin's car, the hope was that Dubin's curves would be close enough to dynamically feasible to be able to track well with a simple controller. In order to generate these primitives, we instantiated a $3x3 m$ grid with a spacing of $1 m$, and computed Dubin's curves from the origin $(0,0)$ to each of the grid points. Each primitive could only start at a heading of $0$ and end at a heading of increments of $\frac{\pi}{4}$, ensuring that the search space of nodes is finite. Due to the max turn radius constraint implemented in the Dubin's curve solver ($3 m$), some of the curves contained one or more loops, which was undesirable in a primitive. Thus, we only added Dubin's curves with no loops (by thresholding the curve length) to the primitive library.
+
+Due to the structure of the problem, backwards motions could have been necessary to reach the goal. We implemented several backwards primitives, each beginning and ending with a heading of $0$, and with lengths of 1 m, 1.5 m, 2.0 m, 2.5 m, 3.0 m, and 3.5 m. These motions completed our primitive library.
+
+
+During A-Star, when we expand a node, we translate and rotate each primitive in the library to the position and orientation of the end of the node's primitive, thus generating the node's children. We then check the children for collisions with obstacles, and add the valid ones to the priority queue. The cost associated with each primitive is simply the length of the curve, which makes the cost of a node the total path length to get to that node.
+
+
+\textbf{ADD PRIMITVES ON GRID FIGURE}
+
+\subsection{Heuristic}
+
+In order to come up with a admissible heuristic, we run value iteration on an MDP in the discretized world, where the actions are straight-line motions on an 8-connected grid, and the cost of each action is the length of the action. 
+
+\textbf{ADD VALUE ITERATION WITHOUT REPLAN COST FIGURE}
+
+\subsection{Dealing with Uncertainty}
+
+In order to take into account the stochastic nature of the problem, we modify our heuristic to include uncertainty. The intuition for doing this is to weight the heuristic of uncertain nodes proportional to uncertainty of openness, so that the planner stays away from locations very likely to be bridges. We implement this by adding a state-dependent cost to the MDP; if a state is within the observation radius of the grid, the associated cost is its distance from the starting location (the robot's current location).
+
+While modifying the heuristic may make it inadmissible, experimental validation has shown that the planner can find paths through the test paths fairly fast.
+
+\textbf{ADD VALUE ITERATION WITHOUT REPLAN COST FIGURE}
+
+\section{Replanning and Control}
+
+Due to the fact that we only discover whether a bridge is blocked or not when the robot approaches within the observation distance of the bridge, replanning is a necessary part of the system architecture. When we make an observation, we check whether out current plan has been invalidated; if so, we first run value iteration to recompute the heuristic, and then recompute a plan using A-Star, using our current position and heading as the initial node.
+
+\section{Results}
+
+
+\end{document}
+
