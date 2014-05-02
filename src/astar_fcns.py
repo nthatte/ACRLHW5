@@ -86,7 +86,7 @@ class motion_primitive:
         return path
     
 class dubins_astar:
-    def __init__(self, world_points, value_fcn, Kp = 1000.0, Kd = 200.0, look_ahead_dist = 0.9):
+    def __init__(self, world_points, value_fcn, Kp = 1000.0, Kd = 200.0, look_ahead_dist = 0.5):
         self.world_points = world_points
         self.Kp = Kp
         self.Kd = Kd
@@ -94,6 +94,7 @@ class dubins_astar:
         self.last_idx = 0
         self.last_seg = 1 # not 0 since 0 is the root and has not path segment
         self.last_err = 0.0
+        self.last_end_dist = 100.0
         self.value_fcn = value_fcn
 
         world_polys = [pt.buffer(0.5, 16, CAP_STYLE.square, JOIN_STYLE.bevel) for pt in world_points]
@@ -145,13 +146,12 @@ class dubins_astar:
         path_states = seg.path        
         err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states]
         dists = np.sqrt(np.sum(np.abs(err_vec)**2,axis=-1))
-        print dists
         #idx = np.argmin(dists)
         
-        if not seg.isbackward: #np.fabs(self.last_err) < (np.pi-np.pi/2):
-            self.look_ahead_dist = 0.5
-        else:
-            self.look_ahead_dist = 0.5
+        #if not seg.isbackward: #np.fabs(self.last_err) < (np.pi-np.pi/2):
+            #self.look_ahead_dist = 0.5
+        #else:
+            #self.look_ahead_dist = 0.5
             
         heading_mode = False
         
@@ -162,7 +162,7 @@ class dubins_astar:
 
                 # TODO - check whether dists[-1] is decreasing to detect leaving last point
                 # If not at the end of the segment, keep going
-                if dists[-1] > 0.1: #
+                if (dists[-1] > 0.1) and (dists[-1] < self.last_end_dist):
                     self.last_idx = len(dists)-1
                     heading_mode = not seg.isbackward
                     break
@@ -181,9 +181,7 @@ class dubins_astar:
                 path_states = seg.path
                 err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states]
                 break
-
         
-        #self.last_idx += idx
         if heading_mode:
             err = wrapToPi(curr_state[2] - path_states[self.last_idx][2])
             action = -self.Kp*10*err
@@ -199,6 +197,7 @@ class dubins_astar:
             
             
         self.last_err = err
+        self.last_end_dist = dists[-1]
         return action
     
     
