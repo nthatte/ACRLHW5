@@ -86,7 +86,7 @@ class AStar:
         h0 = self.heuristic(start_state, goal_state)
         n0 = node(start_state, None, None, 0, h0)
 
-        key0 = n0.state.tostring()
+        key0 = np.around(n0.state, decimals = 1).tostring()
         PQ = PQDict(key0=n0)
 
         i = 0 
@@ -98,7 +98,7 @@ class AStar:
                 path = self.reconstruct_path(current)
                 return (path, current.f)
 
-            V[current.state.tostring()] = copy.deepcopy(current)
+            V[np.around(current.state, decimals = 1).tostring()] = copy.deepcopy(current)
 
             #get children
             children = self.getChildren(current)#do set parent, should return an array of nodes
@@ -108,9 +108,10 @@ class AStar:
                 if i%100 == 0:
                     print 'A* iteration '+str(i)
                 
-                child_key = child.state.tostring()
+                child_key = np.around(child.state, decimals = 1).tostring()
                 if child_key in V:
-                    continue
+                    if child.f >= V[child_key].f:
+                        continue
                 
                 if (child_key in PQ):
                     existing_child = PQ[child_key]
