@@ -11,7 +11,6 @@
 \usepackage{cite}
 \usepackage[numbers]{natbib}
 \usepackage[]{algorithm2e}
-
 \usepackage{listings}
 \usepackage{color}
 \definecolor{dkgreen}{rgb}{0,0.6,0}
@@ -176,9 +175,14 @@ This controller tracks trajectories primitive by primitive, only transitioning t
 
 
 
-Our approach performs quite poorly in some situations, due to the fact that we have a small set of motion primitives. In cases where we get stuck in twisty, maze-like corridors, our motion primitives are not short enough to facilitate an exit motion. Such an exit motion requires multiple sequences of reverses and short turns, and our lack of short turns means that we cannot plan our way out of such situations.
+Our approach performs quite poorly in some situations, due to the fact that we have a small set of motion primitives. In cases where we get stuck in twisty, maze-like corridors, our motion primitives are not short enough to facilitate an exit motion. Such an exit motion (Fig. \ref{fig:stuck}) requires multiple sequences of reverses and short turns, and our lack of short turns means that we cannot plan our way out of such situations.
 
-\textbf{INCLUDE MAP 2 S CURVE FAILURE}
+\begin{figure}[!]
+\centering
+\includegraphics[width=128pt,keepaspectratio]{figures/stuck_in_map2_S.png}\\
+\caption{Planning Failure}
+\label{fig:stuck}
+\end{figure}
 
 Overall, the controller seems to track the trajectory of the robot well, but due to the heavily constrained dynamics of the robot (not being able to steer during reverse), even a slight offset in trajectory tracking can lead to collision/divergence, if a reverse primitive is part of the trajectory.
 
