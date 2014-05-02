@@ -19,7 +19,7 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-map_name = 'map_2'
+map_name = 'map_3'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -196,11 +196,11 @@ for i in range(0,len(map_struct['map_samples'])):
 
             world_points = MultiPoint([Point(xx,yy) for (yy,xx) in tuple_list])
 
-            '''
             #load initial value function for this map
-            with open(map_name +'value.pickle', 'rb') as handle:
+            '''
+            with open(map_name +'value_blocked.pickle', 'rb') as handle:
                 value_fcn = pickle.load(handle)
-                '''
+            '''
 
             #set up grid world mdp
             grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
