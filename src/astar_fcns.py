@@ -21,7 +21,7 @@ def wrapToPi(angle):
 #    return rot_state
 
 class motion_primitive:
-    turning_radius = 3.499999999 #2.999999
+    turning_radius = 3.099999999 #2.999999
     step_size = 0.1
     theta_res = np.pi/4.0
     def __init__(self, delta_state, start_angle = 0, isbackward=False):
@@ -30,10 +30,12 @@ class motion_primitive:
         self.delta_state = delta_state
         self.start_angle = start_angle
         self.cost = dubins.path_length((0,0,self.start_angle), delta_state, motion_primitive.turning_radius)
-        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, motion_primitive.turning_radius, 0.1)
+        self.path,_ = dubins.path_sample((0,0,self.start_angle), self.delta_state, 
+            motion_primitive.turning_radius, 0.1)
+
         self.isbackward = isbackward
         if self.isbackward:
-            self.delta_state = (-np.cos(start_angle),-np.sin(start_angle),start_angle)
+            self.delta_state[:2] = -self.delta_state[:2] #(-0.25*np.cos(start_angle),-0.25*np.sin(start_angle),start_angle)
             self.path = [(-xx,-yy,tth) for (xx,yy,tth) in self.path]
             self.cost *= 2
 
@@ -55,7 +57,7 @@ class motion_primitive:
 
         polygons = [poly.buffer(0.05) for poly in polygons]
         try:
-            self.bounding_poly = cascaded_union(polygons).buffer(0.1).simplify(0.05)
+            self.bounding_poly = cascaded_union(polygons).buffer(0.15).simplify(0.05)
         except:
             self.bounding_poly = None
 
@@ -86,7 +88,7 @@ class dubins_astar:
         self.value_fcn = value_fcn
 
         world_polys = [pt.buffer(0.5, 16, CAP_STYLE.square, JOIN_STYLE.bevel) for pt in world_points]
-        self.world_polys = cascaded_union(world_polys)
+        self.world_polys = cascaded_union(world_polys).buffer(-0.49, 16, CAP_STYLE.flat, JOIN_STYLE.mitre)
 
     def valid_edge(self, state, primitive, plot = True):
 
@@ -98,7 +100,7 @@ class dubins_astar:
             xypoints = [(x+state[0],y+state[1]) for (x,y,z) in primitive.path]
             aaa = LineString(xypoints)
             p1 = PolygonPatch(aaa.buffer(0.1), fc="#999999", ec = '#999999',alpha=1,zorder=9)
-            if bounding_poly.intersects(self.world_points):
+            if bounding_poly.intersects(self.world_polys):
                 color = 'r'
             else:
                 color = 'b'
@@ -122,7 +124,7 @@ class dubins_astar:
             plt.pause(0.1)
             #pdb.set_trace()
         
-        if bounding_poly.intersects(self.world_points):
+        if bounding_poly.intersects(self.world_polys):
 
             return False
         return True
@@ -131,7 +133,7 @@ class dubins_astar:
     def heuristic(self, state1, state2):
         #state_diff = state1 - state2
         #return 15*np.sqrt(state_diff[0]**2 + state_diff[1]**2)
-        return 1.5*self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
+        return 2*self.value_fcn[np.around(state1[:2]).astype(int).tostring()]
 
     def control_policy(self, state, path_states):
         curr_state = np.array([state['x'],state['y'],state['theta']])
@@ -140,7 +142,7 @@ class dubins_astar:
         #idx = np.argmin(dists)
         
         if np.fabs(self.last_err) < (np.pi-np.pi/2):
-            self.look_ahead_dist = 0.9
+            self.look_ahead_dist = 0.5
         else:
             self.look_ahead_dist = 0.05
             

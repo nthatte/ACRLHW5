@@ -8,13 +8,14 @@ import copy
 
 
 class node:
-    def __init__(self, state, parent, path_from_parent, g, h):
+    def __init__(self, state, parent, path_from_parent, g, h, isbackward = False):
         self.state = state
         self.g = g
         self.h = h
         self.f = g + h
         self.parent = parent
         self.path = path_from_parent
+        self.isbackward = isbackward
 
     def __cmp__(self, other):
         return cmp(self.f, other.f)
@@ -29,6 +30,7 @@ class AStar:
         self.state_is_equal = state_equality_function
         self.plot = plot
 
+    @profile
     def getChildren(self, cur_node):
         children = []
         cur_angle = np.around(wrapToPi(cur_node.state[2])/motion_primitive.theta_res)
@@ -36,16 +38,18 @@ class AStar:
 
         for primitive in self.motion_primitives[cur_angle]:
             if self.valid_edge(cur_node.state, primitive, self.plot):
+                #if (cur_node.isbackward and not primitive.isbackward) or not cur_node.isbackward:
                 new_state = primitive.get_end_state(cur_node.state) #cur_node.state + primitive.delta_state
                 g = cur_node.g + self.cost(cur_node.state, primitive)
                 h = self.heuristic(new_state, self.goal_state) 
                 offset = np.array((cur_node.state[0], cur_node.state[1], 0.0))
-                child = node(new_state, cur_node, offset + primitive.path, g, h)
+                child = node(new_state, cur_node, offset + primitive.path, g, h, primitive.isbackward)
                 #print child.path[0]
                 #if cur_node.path != None:
                 #    print cur_node.path[-1]
                 #pdb.set_trace()
                 children.append(child)
+            #pdb.set_trace()
                 
         return children
 

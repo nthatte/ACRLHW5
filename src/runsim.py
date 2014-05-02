@@ -211,7 +211,7 @@ for i in range(0,len(map_struct['map_samples'])):
             carrot_idx = dub.last_idx
             dub = dubins_astar(world_points, value_fcn)
             astar = AStar(motion_primitives, dub.cost_function, dub.heuristic,
-                dub.valid_edge, dub.state_equality)
+                dub.valid_edge, dub.state_equality, plot = False)
             invalidPath = True
 
             

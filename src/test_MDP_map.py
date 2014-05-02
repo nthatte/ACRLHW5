@@ -10,13 +10,15 @@ world_size = 50
 
 map_name = 'map_1'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
-#map_array = map_struct_packed[3]
-map_array = map_struct_packed[4][0]
+map_array = map_struct_packed[3]
+#map_array = map_struct_packed[4][0]
 goal_state  = np.array(map_struct_packed[6].item())
+bridge_locations = map_struct_packed[1]
+bridge_probabilities = map_struct_packed[2]
 
 #get valid states (x,y) locations on the map 
 (x,y) = np.meshgrid(np.arange(1,world_size+1),np.arange(1,world_size+1))
-ind = np.where(map_array!=0)
+ind = np.where(map_array != 0)
 states_list = zip(x[ind], y[ind])
 states = np.array(states_list)
 
@@ -87,9 +89,15 @@ def valid_actions_function(state):
         return valid_actions
                 
 
+replan_cost =  20
 def cost_function(state, action):
-    return np.sqrt(action[0]**2 + action[1]**2)
-    #return np.linalg.norm(action)
+    action_cost = np.linalg.norm(action)
+    #for obs in bridge_locations:
+    if np.linalg.norm(state - bridge_locations, ord = np.inf) <= 5.0:
+        prob = bridge_probabilities
+    else:
+        prob = 1.0
+    return action_cost + (1.0-prob)*replan_cost
 
 mdp = MDP(states, valid_actions_function, cost_function, converge_thr = 1, gamma = 1)
 #V = mdp.value_iteration(policy = init_policy, plot = True, world_size = world_size)
@@ -99,7 +107,8 @@ mdp = MDP(states, valid_actions_function, cost_function, converge_thr = 1, gamma
 #V = mdp.value_iteration(value = init_value, plot = True, world_size = world_size)
 #V = mdp.value_iteration(value = init_value)
 V = mdp.value_iteration(plot = True, world_size = world_size)
+pdb.set_trace()
 #V = mdp.value_iteration()
 
-with open(map_name +'value_blocked.pickle', 'wb') as handle:
-    pickle.dump(V, handle)
+#with open(map_name +'value_blocked.pickle', 'wb') as handle:
+#    pickle.dump(V, handle)
