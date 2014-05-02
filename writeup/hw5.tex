@@ -153,8 +153,34 @@ While modifying the heuristic may make it inadmissible, experimental validation 
 
 Due to the fact that we only discover whether a bridge is blocked or not when the robot approaches within the observation distance of the bridge, replanning is a necessary part of the system architecture. When we make an observation, we check whether out current plan has been invalidated; if so, we first run value iteration to recompute the heuristic, and then recompute a plan using A-Star, using our current position and heading as the initial node.
 
+Due to the fact that our motion primitives are not dynamically feasible, we implemented a controller to track the trajectory correctly. We implemented a switching controller, with three different modes, as shown below:
+
+\begin{align*}
+u =
+\begin{cases}
+sat(-k_P\,e_1 - k_D\,\dot{e_1} + \theta_{ref},\; -1,\; 1) & \text{Forward Motion}\\
+sat(-k_P\,e_2,\; -1,\; 1) & \text{End of Forward Motion}\\
+-2 & \text{Reverse}
+\end{cases}
+\end{align*}
+where 
+\begin{align*}
+\centering
+e_1 &= \theta - \arctan{\frac{y_{ref} - y}{x_{ref} - x}}\\
+e_2 &= \theta - \theta_{ref}
+\end{align*}
+
+This controller tracks trajectories primitive by primitive, only transitioning to the next primitive when at the end of the current one. We do this tracking by 'carrot following', controlling to a point 0.9 m ahead of the robot on the trajectory. At the end of the primitive, we switch to an angle alignment controller, which correctly aligns us with the heading of the final waypoint on the primitive. This mitigates any error in our third control mode, which is just open loop reverse of the robot. Reversing can lead to diverging from the desired trajectory if the initial heading is even slightly off from the final heading, which motivates using the heading-approach controller right before the end of the trajectory.
+
 \section{Results}
 
+
+
+Our approach performs quite poorly in some situations, due to the fact that we have a small set of motion primitives. In cases where we get stuck in twisty, maze-like corridors, our motion primitives are not short enough to facilitate an exit motion. Such an exit motion requires multiple sequences of reverses and short turns, and our lack of short turns means that we cannot plan our way out of such situations.
+
+\textbf{INCLUDE MAP 2 S CURVE FAILURE}
+
+Overall, the controller seems to track the trajectory of the robot well, but due to the heavily constrained dynamics of the robot (not being able to steer during reverse), even a slight offset in trajectory tracking can lead to collision/divergence, if a reverse primitive is part of the trajectory.
 
 \end{document}
 
