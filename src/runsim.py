@@ -19,7 +19,7 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-map_name = 'map_3'
+map_name = 'map_2'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -142,7 +142,9 @@ for i in range(0,len(map_struct['map_samples'])):
                     value_fcn = pickle.load(handle)
 
                 #set up grid world mdp
-                grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'])
+                grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'], 
+                    map_struct['start'], map_struct['bridge_probabilities'], 
+                    map_struct['bridge_locations'])
                 mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
                 value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 
@@ -204,7 +206,10 @@ for i in range(0,len(map_struct['map_samples'])):
             '''
 
             #set up grid world mdp
-            grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
+            #grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
+            grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'], 
+                map_struct['start'], map_struct['bridge_probabilities'], 
+                map_struct['bridge_locations'])
             mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
             value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 

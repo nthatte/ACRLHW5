@@ -1,7 +1,7 @@
 import numpy as np
 
 class GridWorldMDP:
-    def __init__(self, map_array, goal_state):
+    def __init__(self, map_array, goal_state, start_state, bridge_probabilities, bridge_locations, radius = 3.0, replan_factor = 1.0):
        
         self.map_array = map_array
         world_size = self.map_array.shape[0]
@@ -21,6 +21,19 @@ class GridWorldMDP:
                         np.array([-1, -1]),
                         np.array([ 1, -1]),
                         np.array([-1,  1])]
+
+        self.radius = radius
+        self.bridge_locations = bridge_locations
+        if len(bridge_locations.shape) == 1:
+            self.bridge_probabilities = [bridge_probabilities]
+        else:
+            self.bridge_probabilities = bridge_probabilities
+
+        if len(self.bridge_locations.shape) > 1:
+            self.replan_costs = [replan_factor*np.linalg.norm(start_state - bridge_location) 
+                for bridge_location in bridge_locations.T]
+        else:
+            self.replan_costs = [replan_factor*np.linalg.norm(start_state - bridge_locations)]
 
     def __valid_state(self, state):
         if self.map_array[state[1] -1, state[0] - 1] != 0.0:
@@ -69,5 +82,27 @@ class GridWorldMDP:
                                 valid_actions.append(a)
             return valid_actions
 
+    '''
     def cost_function(self, state, action):
         return np.sqrt(action[0]**2 + action[1]**2)
+    '''
+
+    def cost_function(self, state, action):
+        action_cost = np.linalg.norm(action)
+        #for obs in bridge_locations:
+        if len(self.bridge_locations.shape) > 1:
+            dists_to_bridge = self.bridge_locations.T-state
+            dists_to_bridge = np.sqrt(dists_to_bridge[:,0]**2 + dists_to_bridge[:,1]**2)
+        else:
+            dists_to_bridge = state - bridge_locations
+            dists_to_bridge = [np.sqrt(dists_to_bridge[0]**2 + dists_to_bridge[1]**2)]
+
+        prob_open = 1.0
+        replan_cost = 0.0
+        for (i, dist_to_bridge) in enumerate(dists_to_bridge):
+            if dist_to_bridge <= self.radius:
+                prob_open *= self.bridge_probabilities[i]
+                if self.replan_costs[i] > replan_cost:
+                    replan_cost = self.replan_costs[i]
+            i += 1
+        return action_cost + (1.0-prob_open)*replan_cost
