@@ -4,7 +4,7 @@ from astar_fcns import motion_primitive
 import pdb
 
 def computePrimitives():
-    [x,y,th] = np.mgrid[-3.1:3.1:7j, -3.1:3.1:7j, -np.pi:(0.75*np.pi):8j]
+    [x,y,th] = np.mgrid[-3.25:3.25:7j, -3.25:3.25:7j, -np.pi:(0.75*np.pi):8j]
 
     x = x.flatten()
     y = y.flatten()

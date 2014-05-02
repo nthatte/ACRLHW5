@@ -127,4 +127,4 @@ class AStar:
                     PQ.additem(child_key,child)
         
         print 'A* Failed'
-        return None   
+        return (None, None)

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from astar import AStar
 from astar_fcns import *
 from MDP import MDP
-from grid_mdp_fcns import GridWorldMDP
+from grid_mdp_fcns_uncertain import GridWorldMDP
 import dubins
 from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, MultiPoint
 from shapely.ops import cascaded_union
@@ -142,12 +142,12 @@ for i in range(0,len(map_struct['map_samples'])):
                     value_fcn = pickle.load(handle)
 
                 #set up grid world mdp
+                '''
                 grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'])
                 '''
                 grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'], 
                     map_struct['start'], map_struct['bridge_probabilities'], 
                     map_struct['bridge_locations'])
-                '''
                 mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
                 value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 
@@ -174,13 +174,15 @@ for i in range(0,len(map_struct['map_samples'])):
 
             astar_goal = np.array([goal[0],goal[1],0])
             plan, cost = astar.plan(astar_state, astar_goal)
-            print 'path cost:'
-            print cost
-            path_states = motion_primitive.get_xytheta_paths(plan)
-            dub.last_seg = 1 # not 0 since 0 is the root and has not path segment
-            dub.last_idx = 0
-            print 'done'
-
+            if plan is not None:
+                print 'path cost:'
+                print cost
+                path_states = motion_primitive.get_xytheta_paths(plan)
+                dub.last_seg = 1 # not 0 since 0 is the root and has not path segment
+                dub.last_idx = 0
+                print 'done'
+            else:
+                break
 
         #compute action
         action = dub.control_policy(state, plan)
@@ -209,13 +211,13 @@ for i in range(0,len(map_struct['map_samples'])):
             '''
 
             #set up grid world mdp
-            '''
             start_state = np.around(np.array(state['x'],state['y']))
             grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'], 
                 start_state, map_struct['bridge_probabilities'], 
                 map_struct['bridge_locations'])
             '''
             grid_mdp = GridWorldMDP(observed_map_new, map_struct['goal'])
+            '''
             mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
             value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
 
