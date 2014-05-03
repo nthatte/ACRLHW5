@@ -161,7 +161,7 @@ class dubins_astar:
             if self.last_idx >= len(dists):
                 
                 # If current segment is forward and next is reverse, and we're not too close to the end of the segment, apply heading control
-                if not seg.isbackward and ((self.last_seg-1)<len(plan)) and plan[self.last_seg+1].isbackward and (dists[-1] > 0.1):
+                if not seg.isbackward and ((self.last_seg+1)<len(plan)) and plan[self.last_seg+1].isbackward and (dists[-1] > 0.1):
                         self.last_idx = len(dists)-1
                         heading_mode = True
                         break
