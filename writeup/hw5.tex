@@ -121,7 +121,7 @@
 
 \section{Planning Algorithm: A-Star}
 
-We decided to use the A-Star search algorithm to solve the planning problem. Our nodes were $(x, y, \theta)$ tuples, and we utilized a small set of grid-based motion primitives as our edges. We hand-tuned the number and curvature of the motion-primitives to obtain a good tradeoff between planning time and ability to solve complex geometries.
+Because we felt solving the full POMDP for this problem is intractable, we decided to use the A-Star search algorithm to solve an MDP that heuristically encodes the uncertainty in the planning problem. Our nodes were $(x, y, \theta)$ tuples, and we utilized a small set of grid-based motion primitives as our edges. We hand-tuned the number and curvature of the motion-primitives to obtain a good trade-off between planning time and ability to solve complex geometries.
 
 \subsection{Motion Primitives and Cost}
 
@@ -141,7 +141,7 @@ During A-Star, when we expand a node, we translate and rotate each primitive in 
 
 \subsection{Heuristic}
 
-In order to come up with a admissible heuristic, we run value iteration on an MDP in the discretized world, where the actions are straight-line motions on an 8-connected grid, and the cost of each action is the length of the action. Example heuristics are shown in Fig. \ref{fig:valuefcns}.
+In order to come up with an admissible heuristic, we run value iteration on an MDP in the discretized world, where the car is modeled as the inscribed disk of the actual car, the actions are straight-line motions on an 8-connected grid, and the cost of each action is the length of the action. Example heuristics are shown in Fig. \ref{fig:valuefcns}.
  
 \begin{figure}[ht]
     \centering
@@ -166,8 +166,7 @@ In order to come up with a admissible heuristic, we run value iteration on an MD
 
 \subsection{Dealing with Uncertainty}
 
-In order to take into account the stochastic nature of the problem, we modify our heuristic to include uncertainty. The intuition for doing this is to weight the heuristic of uncertain nodes proportional to uncertainty of openness, so that the planner stays away from locations very likely to be bridges. We implement this by adding a state-dependent cost to the MDP; if a state is within the observation radius of the grid, the associated cost is its distance from the starting location (the robot's current location). Example modified heuristics are shown in Fig. \ref{fig:valuefcns_mod}; as can be seen from these figures, the value function is now heavily dependent on the uncertainty in the bridges. The decision point for the value function (point of zero gradient) changes when the uncertainty is added. We can see from the comparison of Fig. \ref{fig:valuefcns} and Fig. \ref{fig:valuefcns_mod} that the decision point moves in a way that makes the gradient in more states descend towards the path least likely to be blocked.
-
+In order to take into account the stochastic nature of the problem, we modify our heuristic to include uncertainty. The intuition for doing this is to weight the heuristic of uncertain nodes proportional to uncertainty of openness, so that the planner stays away from locations very likely to be bridges. We implement this by adding a state-dependent cost to the MDP; if a state is within the observation radius of the grid, the associated cost is its distance from the starting location (the robot's current location). Example modified heuristics are shown in Fig. \ref{fig:valuefcns_mod}; as can be seen from these figures, the value function is now heavily dependent on the uncertainty in the bridges. The decision point for the value function (point of zero gradient) changes when the uncertainty is added. We can see from the comparison of Fig. \ref{fig:valuefcns} and Fig. \ref{fig:valuefcns_mod} that the decision point moves in a way that makes the gradient in more states descend towards the path least likely to be blocked. 
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
@@ -189,20 +188,19 @@ In order to take into account the stochastic nature of the problem, we modify ou
     \label{fig:valuefcns_mod}
 \end{figure}
 
-While modifying the heuristic may make it inadmissible, experimental validation has shown that the planner can find paths through the test paths fairly fast.
-
+While modifying the heuristic may make it inadmissible, experimental validation has shown that the planner can find paths through the test paths fairly fast. In any case, we inflate the heuristic to improve planning times.
 
 \section{Replanning and Control}
 
-Due to the fact that we only discover whether a bridge is blocked or not when the robot approaches within the observation distance of the bridge, replanning is a necessary part of the system architecture. When we make an observation, we check whether out current plan has been invalidated; if so, we first run value iteration to recompute the heuristic, and then recompute a plan using A-Star, using our current position and heading as the initial node.
+Due to the fact that we only discover whether a bridge is blocked or not when the robot approaches within the observation distance of the bridge, replanning is a necessary part of the system architecture. When we make an observation, we first run value iteration to recompute the heuristic, and then recompute a plan using A-Star, using our current position and heading as the initial node.
 
 Due to the fact that our motion primitives are not dynamically feasible, we implemented a controller to track the trajectory correctly. We implemented a switching controller, with three different modes, as shown below:
 
 \begin{align*}
 u =
 \begin{cases}
-sat(-k_P\,e_1 - k_D\,\dot{e_1} + \theta_{ref},\; -1,\; 1) & \text{Forward Motion}\\
-sat(-k_P\,e_2,\; -1,\; 1) & \text{End of Forward Motion}\\
+\mathrm{sat}(-k_P\,e_1 - k_D\,\dot{e_1} + \theta_{ref},\; -1,\; 1) & \text{Forward Motion}\\
+\mathrm{sat}(-k_P\,e_2,\; -1,\; 1) & \text{End of Forward Motion}\\
 -2 & \text{Reverse}
 \end{cases}
 \end{align*}
@@ -213,8 +211,7 @@ e_1 &= \theta - \arctan{\frac{y_{ref} - y}{x_{ref} - x}}\\
 e_2 &= \theta - \theta_{ref}
 \end{align*}
 
-This controller tracks trajectories primitive by primitive, only transitioning to the next primitive when at the end of the current one. We do this tracking by `carrot following', controlling to a point 0.9 m ahead of the robot on the trajectory. At the end of the primitive, we switch to an angle alignment controller, which correctly aligns us with the heading of the final waypoint on the primitive. This mitigates any error in our third control mode, which is just open loop reverse of the robot. Reversing can lead to diverging from the desired trajectory if the initial heading is even slightly off from the final heading, which motivates using the heading-approach controller right before the end of the trajectory.
-
+This controller tracks trajectories primitive by primitive via a `carrot following' controller that tracks a point 0.9 m ahead of the robot on the trajectory. Before a backup primitive, we switch to an angle alignment controller, which correctly aligns us with the heading of the backup action and mitigates any error during the open loop reverse of the robot.
 \section{Results}
 
 We ran several trials on each of the seven maps given, sampling the seed map distribution to get a ground truth map. We computed statistics on average number of collisions, failed plans, successes, runtime, and path length. Our results are shown below: 
