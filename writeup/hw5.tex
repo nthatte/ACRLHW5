@@ -127,68 +127,70 @@ We decided to use the A-Star search algorithm to solve the planning problem. Our
 
 Our motion primitives were designed as short Dubin's curves, designed to be less than 9 meters in length. While the model is not actually a Dubin's car, the hope was that Dubin's curves would be close enough to dynamically feasible to be able to track well with a simple controller. In order to generate these primitives, we instantiated a $3x3 m$ grid with a spacing of $1 m$, and computed Dubin's curves from the origin $(0,0)$ to each of the grid points. Each primitive could only start at a heading of $0$ and end at a heading of increments of $\frac{\pi}{4}$, ensuring that the search space of nodes is finite. Due to the max turn radius constraint implemented in the Dubin's curve solver ($3 m$), some of the curves contained one or more loops, which was undesirable in a primitive. Thus, we only added Dubin's curves with no loops (by thresholding the curve length) to the primitive library.
 
-Due to the structure of the problem, backwards motions could have been necessary to reach the goal. We implemented several backwards primitives, each beginning and ending with a heading of $0$, and with lengths of 1 m, 1.5 m, 2.0 m, 2.5 m, 3.0 m, and 3.5 m. These motions completed our primitive library.
+Due to the structure of the problem, backwards motions could have been necessary to reach the goal. We implemented several backwards primitives, each beginning and ending with a heading of $0$, and with lengths of 1 m, 1.5 m, 2.0 m, 2.5 m, 3.0 m, and 3.5 m. These motions completed our primitive library, shown superimposed in Fig. \ref{fig:prim_lib}.
 
 
 During A-Star, when we expand a node, we translate and rotate each primitive in the library to the position and orientation of the end of the node's primitive, thus generating the node's children. We then check the children for collisions with obstacles, and add the valid ones to the priority queue. The cost associated with each primitive is simply the length of the curve, which makes the cost of a node the total path length to get to that node.
 
-
-\textbf{ADD PRIMITVES ON GRID FIGURE}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=256pt,keepaspectratio]{figures/primitives.png}
+\caption{Primitive Library}
+\label{fig:prim_lib}
+\end{figure}
 
 \subsection{Heuristic}
 
-In order to come up with a admissible heuristic, we run value iteration on an MDP in the discretized world, where the actions are straight-line motions on an 8-connected grid, and the cost of each action is the length of the action. 
+In order to come up with a admissible heuristic, we run value iteration on an MDP in the discretized world, where the actions are straight-line motions on an 8-connected grid, and the cost of each action is the length of the action. Example heuristics are shown in Fig. \ref{fig:valuefcns}.
  
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width = \textwidth]{map1value.png}
-        \caption{map 1}
+        \caption{Map 1 Heuristic}
         \label{fig:map1value}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width = \textwidth]{map2value.png}
-        \caption{map 2}
+        \caption{Map 2 Heuristic}
         \label{fig:map2value}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width = \textwidth]{map3value.png}
-        \caption{map 3}
+        \caption{Map 3 Heuristic}
         \label{fig:map3value}
     \end{subfigure}
-    \caption{Freespace value functions and policies for inscribe disk model}
+    \caption{Freespace value functions and policies for inscribed disk model}
     \label{fig:valuefcns}
 \end{figure}
-\textbf{ADD VALUE ITERATION WITHOUT REPLAN COST FIGURE}
 
 \subsection{Dealing with Uncertainty}
 
-In order to take into account the stochastic nature of the problem, we modify our heuristic to include uncertainty. The intuition for doing this is to weight the heuristic of uncertain nodes proportional to uncertainty of openness, so that the planner stays away from locations very likely to be bridges. We implement this by adding a state-dependent cost to the MDP; if a state is within the observation radius of the grid, the associated cost is its distance from the starting location (the robot's current location).
+In order to take into account the stochastic nature of the problem, we modify our heuristic to include uncertainty. The intuition for doing this is to weight the heuristic of uncertain nodes proportional to uncertainty of openness, so that the planner stays away from locations very likely to be bridges. We implement this by adding a state-dependent cost to the MDP; if a state is within the observation radius of the grid, the associated cost is its distance from the starting location (the robot's current location). Example modified heuristics are shown in Fig. \ref{fig:valuefcns_mod}; as can be seen from these figures, the value function is now heavily dependent on the uncertainty in the bridges. The decision point for the value function (point of zero gradient) changes when the uncertainty is added. We can see from the comparison of Fig. \ref{fig:valuefcns} and Fig. \ref{fig:valuefcns_mod} that the decision point moves in a way that makes the gradient in more states descend towards the path least likely to be blocked.
 
-While modifying the heuristic may make it inadmissible, experimental validation has shown that the planner can find paths through the test paths fairly fast.
-
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width = \textwidth]{map1value_uncertain.png}
-        \caption{map 1}
+        \caption{Map 1 Heuristic Under Uncertainty}
         \label{fig:map1value_mod}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width = \textwidth]{map2value_uncertain.png}
-        \caption{map 2}
+        \caption{Map 2 Heuristic Under Uncertainty}
         \label{fig:map2value_mod}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width = \textwidth]{map3value_uncertain.png}
-        \caption{map 3}
+        \caption{Map 3 Heuristic Under Uncertainty}
         \label{fig:map3value_mod}
     \end{subfigure}
-    \caption{Modified value functions and policies for inscribe disk model}
+    \caption{Modified value functions and policies for inscribed disk model}
     \label{fig:valuefcns_mod}
 \end{figure}
 
-\textbf{ADD VALUE ITERATION WITHOUT REPLAN COST FIGURE}
+While modifying the heuristic may make it inadmissible, experimental validation has shown that the planner can find paths through the test paths fairly fast.
+
 
 \section{Replanning and Control}
 
@@ -215,15 +217,75 @@ This controller tracks trajectories primitive by primitive, only transitioning t
 
 \section{Results}
 
+We ran several trials on each of the seven maps given, sampling the seed map distribution to get a ground truth map. We computed statistics on average number of collisions, failed plans, successes, runtime, and path length. Our results are shown below: 
+\vspace{24pt}\\
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline 
+• & No. Trials & Failed Planning & Collisions & Successes & Avg. Path Length & Time  \\ 
+&&&&&(Success Only)&(Planning+Execution)\\
+\hline 
+Map 1 & 2 & 0 & 0 & 5 & 96 m & 55 s \\ 
+\hline 
+Map 2 & 5 & 1 & 0 & 4 & 67 m & 143 s \\ 
+\hline 
+Map 3 & 5 & 0 & 3 & 2 & 50 m & 122 s\\ 
+\hline 
+Map 4 & 5 & 1 & 0 & 4 & 54 m & 116 s \\ 
+\hline 
+Map 5 & 5 & 0 & 2 & 3 & 149 m & 289 s \\ 
+\hline 
+Map 6 & 5 & 0 & 2 & 3 & 126 m & 238 s \\ 
+\hline 
+Map 7 & 5 & 3 & 0 & 2 & 67 m & 192 s \\ 
+\hline 
+\end{tabular} 
+\vspace{24pt}
+\\
+In general, we see that our approach leads the robot to plan paths that are least likely to be blocked. Thus, we perform fairly well on many of the maps. However, in some of the maps with tight corridors, our approach performs poorly due to a small primitive library. An example successful trajectory is given in Fig. \ref{fig:map6good}. We can see the initial plan in Fig. \ref{fig:map61}. This plan avoids areas with a high probability to be blocked, which explains the roundabout route. As the robot encounters obstacles in its path, as shown in Fig. \ref{fig:map61} and Fig. \ref{fig:map62}. Additionally, when the robot passes a bridge that turns out to be closed, it replans and finds a shorter cost path, due to the recomputation of the heuristic (Fig. \ref{fig:map63}). It then finds that the planned route is blocked (Fig. \ref{fig:map64}) and plans and executes its way to the goal (Fig. \ref{fig:map65}).
 
-Our approach performs quite poorly in some situations, due to the fact that we have a small set of motion primitives. In cases where we get stuck in twisty, maze-like corridors, our motion primitives are not short enough to facilitate an exit motion. Such an exit motion (Fig.~\ref{fig:stuck}) requires multiple sequences of reverses and short turns, and our lack of short turns means that we cannot plan our way out of such situations.
+\newpage
 
-\begin{figure}[!]
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width = \textwidth]{map6plan2.png}
+        \caption{Initial Plan}
+        \label{fig:map61}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width = \textwidth]{map6plan3.png}
+        \caption{Replan 1}
+        \label{fig:map62}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width = \textwidth]{map6plan3_2.png}
+        \caption{Replan 2}
+        \label{fig:map63}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width = \textwidth]{map6plan3_3.png}
+        \caption{Replan 3}
+        \label{fig:map64}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width = \textwidth]{map6plan3_4.png}
+        \caption{Replan 4}
+        \label{fig:map65}
+    \end{subfigure}
+    \caption{Map 6 Planning Sequence}
+    \label{fig:map6good}
+\end{figure}
+
+Our approach performs quite poorly in some situations, due to the fact that we have a small set of motion primitives. In cases where we get stuck in twisty, maze-like corridors, our motion primitives are not short enough to facilitate an exit motion. Such an exit motion (Fig.~\ref{fig:stuck}) requires multiple sequences of reverses and short turns, and our lack of short turns means that we cannot plan our way out of such situations. Additionally, when we see an obstacle and are close to a wall, the lack of short primitives leads to planning failure, due to the lack of short primitives that would enable the robot to maneuver out of its tightly constrained position.
+
+\begin{figure}[ht]
 \centering
 \includegraphics[width=128pt,keepaspectratio]{stuck_in_map2_S.png}
-\caption{Planning Failure}
+\caption{Planning Failure (Map 2)}
 \label{fig:stuck}
 \end{figure}
+
+\newpage
 
 Overall, the controller seems to track the trajectory of the robot well, but due to the heavily constrained dynamics of the robot (not being able to steer during reverse), even a slight offset in trajectory tracking can lead to collision/divergence, if a reverse primitive is part of the trajectory.
 
