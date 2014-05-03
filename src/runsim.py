@@ -13,13 +13,16 @@ import dubins
 from shapely.geometry import Point, CAP_STYLE, JOIN_STYLE, MultiPoint
 from shapely.ops import cascaded_union
 import computePrimitives
+import time
 
 #*****************************
 # Load map files and parameters
 #*****************************
 import scipy.io as sio
 
-map_name = 'maps/map_3'
+stats_list = []
+
+map_name = 'maps/map_1'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -44,7 +47,6 @@ scale = 10.0
 
 DISPLAY_ON = 1 # 1 - turns display on, 0 - turns display off
 DISPLAY_TYPE = 'dots' # display as dots or blocks
-
 
 #*****************************
 # Training/Learning Phase
@@ -84,7 +86,7 @@ DISPLAY_TYPE = 'dots' # display as dots or blocks
 #
 # Loop through each map sample
 for i in range(0,len(map_struct['map_samples'])):
-
+    start_time = time.clock()
     # Initialize the starting car state and observed map
     # observed_map is set to seed map, and the bridge information will be
     # updated once the car is within params.observation_radius
@@ -99,6 +101,10 @@ for i in range(0,len(map_struct['map_samples'])):
     # loop until maxCount has been reached or goal is found
     loopCounter = 0
     invalidPath = False
+
+    dist_traveled = 0.0
+    car_pos = np.array([0.0, 0.0])
+    last_car_pos = np.array([0.0, 0.0])
     while (state['moveCount'] < params['max_moveCount']) and flags == 0:
         #---------------------------------------
         #
@@ -180,17 +186,22 @@ for i in range(0,len(map_struct['map_samples'])):
                 path_states = motion_primitive.get_xytheta_paths(plan)
                 dub.last_seg = 1 # not 0 since 0 is the root and has not path segment
                 dub.last_idx = 0
+                astar_failed = False
                 print 'done'
             else:
+                astar_failed = True
                 break
 
         #compute action
         action = dub.control_policy(state, plan)
         
         # Execute the action and update observed_map
+        last_car_pos = car_pos
         observed_map_old = copy.deepcopy(observed_map_new)
         (state, observed_map_new, flags) = motionModel(params, state, action,
             observed_map_new, map_struct['map_samples'][i], goal)
+        car_pos = np.array([state['x'], state['y']])
+        dist_traveled += np.linalg.norm(car_pos - last_car_pos)
     
         if not numpy.array_equal(np.ceil(observed_map_old), np.ceil(observed_map_new)):
             print 'bridge detected! Replanning...'
@@ -238,6 +249,7 @@ for i in range(0,len(map_struct['map_samples'])):
         #if loopCounter == 0:
         #    pdb.set_trace()
 
+        
         loopCounter += 1
         # pause if you'd like to pause at each step
         # pause
@@ -247,3 +259,10 @@ for i in range(0,len(map_struct['map_samples'])):
         print 'reached goal!'
     elif flags == 2:
         print 'collision!'
+    
+    finish_time = time.clock()
+    run_time = start_time - finish_time
+    stats_list.append((i, map_struct['map_samples'][i], flags, astar_failed, dist_traveled, run_time))
+
+with open(map_name +'_stats.pickle', 'wb') as handle:
+    pickle.dump(stats_list, handle)
