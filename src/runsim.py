@@ -19,7 +19,7 @@ import computePrimitives
 #*****************************
 import scipy.io as sio
 
-map_name = 'maps/map_3'
+map_name = 'maps/map_1'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
