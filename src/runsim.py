@@ -22,7 +22,7 @@ import scipy.io as sio
 
 stats_list = []
 
-map_name = 'maps/map_3'
+map_name = 'maps/map_6_sampled'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -145,8 +145,10 @@ for i in np.unique(np.round(np.linspace(0,len(map_struct['map_samples']),5,False
                 motion_primitives = computePrimitives.computePrimitives()
 
                 #load initial value function for this map
+                '''
                 with open(map_name +'value.pickle', 'rb') as handle:
                     value_fcn = pickle.load(handle)
+                '''
 
                 #set up grid world mdp
                 '''
@@ -155,8 +157,14 @@ for i in np.unique(np.round(np.linspace(0,len(map_struct['map_samples']),5,False
                 grid_mdp = GridWorldMDP(map_struct['seed_map'], map_struct['goal'], 
                     map_struct['start'], map_struct['bridge_probabilities'], 
                     map_struct['bridge_locations'])
+
+                init_value = {}
+                for s in grid_mdp.states:
+                    init_value[s.tostring()] = np.linalg.norm(s - grid_mdp.goal_state)
+
                 mdp = MDP(grid_mdp.states, grid_mdp.valid_actions_function, grid_mdp.cost_function)
-                value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
+                #value_fcn = mdp.value_iteration(value = value_fcn, plot=True, world_size = 50)
+                value_fcn = mdp.value_iteration(value = init_value, plot=True, world_size = 50)
 
                 #set up dubins astar
                 dub = dubins_astar(world_points, value_fcn)
