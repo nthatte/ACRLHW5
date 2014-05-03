@@ -3,6 +3,7 @@ import dubins
 from astar_fcns import motion_primitive
 import pdb
 
+
 def computePrimitives():
     [x,y,th] = np.mgrid[-3.25:3.25:7j, -3.25:3.25:7j, -np.pi:(0.75*np.pi):8j]
 
@@ -50,4 +51,5 @@ def computePrimitives():
             print prim.path[0], prim.path[-1]
     pdb.set_trace()
     '''
+    
     return motion_primitives
