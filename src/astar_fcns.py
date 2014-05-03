@@ -172,10 +172,12 @@ class dubins_astar:
                     break
                     
                 # If at last segment, stay at the end
-                if self.last_seg >= len(plan):
+                if self.last_seg >= len(plan)-1:
                     self.last_seg = len(plan)-1
-                    self.last_idx = len(seg)-1
+                    self.last_idx = len(seg.path)-1
                     heading_mode = not seg.isbackward
+                    if dists[-1] > 0.2:
+                        break
                 else:
                     # Go to next segment and reset index
                     self.last_seg += 1
