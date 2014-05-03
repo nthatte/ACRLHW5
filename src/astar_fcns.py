@@ -159,18 +159,23 @@ class dubins_astar:
             self.last_idx += 1
             # If at end of segment, go to next
             if self.last_idx >= len(dists):
-
-                # TODO - check whether dists[-1] is decreasing to detect leaving last point
-                # If not at the end of the segment, keep going
-                if (dists[-1] > 0.1) and (dists[-1] < self.last_end_dist):
+                
+                # If current segment is forward and next is reverse, and we're not too close to the end of the segment, apply heading control
+                if not seg.isbackward and ((self.last_seg-1)<len(plan)) and plan[self.last_seg+1].isbackward and (dists[-1] > 0.1):
+                        self.last_idx = len(dists)-1
+                        heading_mode = True
+                        break
+                    
+                # If current segment is reverse and we're not too close to the end, track to the end
+                if seg.isbackward and (dists[-1] < self.last_end_dist) and (dists[-1] > 0.1):
                     self.last_idx = len(dists)-1
-                    heading_mode = not seg.isbackward
                     break
                     
                 # If at last segment, stay at the end
                 if self.last_seg >= len(plan):
                     self.last_seg = len(plan)
                     self.last_idx = len(seg)
+                    heading_mode = not seg.isbackward
                 else:
                     # Go to next segment and reset index
                     self.last_seg += 1
@@ -180,7 +185,10 @@ class dubins_astar:
                 seg = plan[self.last_seg]
                 path_states = seg.path
                 err_vec = [[x,y] - curr_state[0:2] for [x,y,z] in path_states]
-                break
+                dists = np.sqrt(np.sum(np.abs(err_vec)**2,axis=-1))
+                
+                if seg.isbackward:
+                    break
         
         if heading_mode:
             err = wrapToPi(curr_state[2] - path_states[self.last_idx][2])
