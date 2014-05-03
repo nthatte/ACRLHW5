@@ -22,7 +22,7 @@ import scipy.io as sio
 
 stats_list = []
 
-map_name = 'maps/map_1'
+map_name = 'maps/map_2'
 map_struct_packed = sio.loadmat(map_name + '.mat', squeeze_me = True)['map_struct'].item()
 map_struct = {}
 map_struct['map_name'] = map_struct_packed[0]
@@ -85,7 +85,8 @@ DISPLAY_TYPE = 'dots' # display as dots or blocks
 #
 #
 # Loop through each map sample
-for i in range(0,len(map_struct['map_samples'])):
+for i in np.unique(np.round(np.linspace(0,len(map_struct['map_samples']),5,False))): #range(0,len(map_struct['map_samples'])):
+    print "Running instance " + str(i)
     start_time = time.clock()
     # Initialize the starting car state and observed map
     # observed_map is set to seed map, and the bridge information will be

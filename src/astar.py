@@ -90,7 +90,7 @@ class AStar:
         PQ = PQDict(key0=n0)
 
         i = 0 
-        while PQ:
+        while PQ and i < 100000:
             current = PQ.popitem()[1]
             #print '\n'
             #print current.state[2]
