@@ -2,11 +2,12 @@
 \usepackage{calc, amsmath, amssymb, amsfonts, amsthm, mathtools, empheq}
 \usepackage{tabularx,colortbl}
 \usepackage{fancyhdr, graphicx}
+\graphicspath{{figures/}}
 %\usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{framed}
 \usepackage{enumerate}
-\usepackage{subfigure}
+\usepackage{subcaption}
 \usepackage{hyperref}
 \usepackage{cite}
 \usepackage[numbers]{natbib}
@@ -137,7 +138,27 @@ During A-Star, when we expand a node, we translate and rotate each primitive in 
 \subsection{Heuristic}
 
 In order to come up with a admissible heuristic, we run value iteration on an MDP in the discretized world, where the actions are straight-line motions on an 8-connected grid, and the cost of each action is the length of the action. 
-
+ 
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width = \textwidth]{map1value.png}
+        \caption{map 1}
+        \label{fig:map1value}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width = \textwidth]{map2value.png}
+        \caption{map 2}
+        \label{fig:map2value}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width = \textwidth]{map3value.png}
+        \caption{map 3}
+        \label{fig:map3value}
+    \end{subfigure}
+    \caption{Freespace value functions and policies for inscribe disk model}
+    \label{fig:valuefcns}
+\end{figure}
 \textbf{ADD VALUE ITERATION WITHOUT REPLAN COST FIGURE}
 
 \subsection{Dealing with Uncertainty}
@@ -145,6 +166,27 @@ In order to come up with a admissible heuristic, we run value iteration on an MD
 In order to take into account the stochastic nature of the problem, we modify our heuristic to include uncertainty. The intuition for doing this is to weight the heuristic of uncertain nodes proportional to uncertainty of openness, so that the planner stays away from locations very likely to be bridges. We implement this by adding a state-dependent cost to the MDP; if a state is within the observation radius of the grid, the associated cost is its distance from the starting location (the robot's current location).
 
 While modifying the heuristic may make it inadmissible, experimental validation has shown that the planner can find paths through the test paths fairly fast.
+
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width = \textwidth]{map1value_uncertain.png}
+        \caption{map 1}
+        \label{fig:map1value_mod}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width = \textwidth]{map2value_uncertain.png}
+        \caption{map 2}
+        \label{fig:map2value_mod}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width = \textwidth]{map3value_uncertain.png}
+        \caption{map 3}
+        \label{fig:map3value_mod}
+    \end{subfigure}
+    \caption{Modified value functions and policies for inscribe disk model}
+    \label{fig:valuefcns_mod}
+\end{figure}
 
 \textbf{ADD VALUE ITERATION WITHOUT REPLAN COST FIGURE}
 
@@ -169,17 +211,16 @@ e_1 &= \theta - \arctan{\frac{y_{ref} - y}{x_{ref} - x}}\\
 e_2 &= \theta - \theta_{ref}
 \end{align*}
 
-This controller tracks trajectories primitive by primitive, only transitioning to the next primitive when at the end of the current one. We do this tracking by 'carrot following', controlling to a point 0.9 m ahead of the robot on the trajectory. At the end of the primitive, we switch to an angle alignment controller, which correctly aligns us with the heading of the final waypoint on the primitive. This mitigates any error in our third control mode, which is just open loop reverse of the robot. Reversing can lead to diverging from the desired trajectory if the initial heading is even slightly off from the final heading, which motivates using the heading-approach controller right before the end of the trajectory.
+This controller tracks trajectories primitive by primitive, only transitioning to the next primitive when at the end of the current one. We do this tracking by `carrot following', controlling to a point 0.9 m ahead of the robot on the trajectory. At the end of the primitive, we switch to an angle alignment controller, which correctly aligns us with the heading of the final waypoint on the primitive. This mitigates any error in our third control mode, which is just open loop reverse of the robot. Reversing can lead to diverging from the desired trajectory if the initial heading is even slightly off from the final heading, which motivates using the heading-approach controller right before the end of the trajectory.
 
 \section{Results}
 
 
-
-Our approach performs quite poorly in some situations, due to the fact that we have a small set of motion primitives. In cases where we get stuck in twisty, maze-like corridors, our motion primitives are not short enough to facilitate an exit motion. Such an exit motion (Fig. \ref{fig:stuck}) requires multiple sequences of reverses and short turns, and our lack of short turns means that we cannot plan our way out of such situations.
+Our approach performs quite poorly in some situations, due to the fact that we have a small set of motion primitives. In cases where we get stuck in twisty, maze-like corridors, our motion primitives are not short enough to facilitate an exit motion. Such an exit motion (Fig.~\ref{fig:stuck}) requires multiple sequences of reverses and short turns, and our lack of short turns means that we cannot plan our way out of such situations.
 
 \begin{figure}[!]
 \centering
-\includegraphics[width=128pt,keepaspectratio]{figures/stuck_in_map2_S.png}\\
+\includegraphics[width=128pt,keepaspectratio]{stuck_in_map2_S.png}
 \caption{Planning Failure}
 \label{fig:stuck}
 \end{figure}

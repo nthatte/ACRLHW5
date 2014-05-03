@@ -99,7 +99,6 @@ if len(bridge_locations.shape) > 1:
 else:
     replan_costs = [np.linalg.norm(start_state - bridge_locations, ord = np.inf)]
 
-'''
 def cost_function(state, action):
     return np.sqrt(action[0]**2 + action[1]**2)
 '''
@@ -123,6 +122,7 @@ def cost_function(state, action):
                 replan_cost = replan_costs[i]
         i += 1
     return action_cost + (1.0-prob_open)*replan_cost
+'''
 
 mdp = MDP(states, valid_actions_function, cost_function, converge_thr = 1, gamma = 1)
 #V = mdp.value_iteration(policy = init_policy, plot = True, world_size = world_size)
@@ -134,5 +134,7 @@ V = mdp.value_iteration(value = init_value, plot = True, world_size = world_size
 #V = mdp.value_iteration(plot = True, world_size = world_size)
 #V = mdp.value_iteration()
 
+'''
 with open(map_name +'value.pickle', 'wb') as handle:
     pickle.dump(V, handle)
+'''
